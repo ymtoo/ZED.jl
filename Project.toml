@@ -1,0 +1,13 @@
+name = "ZED"
+uuid = "3e6dc4d7-8fe2-406d-94e8-a95195665ebf"
+authors = ["ymtoo <ymtoo86@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
