@@ -32,17 +32,28 @@ rt_param = SL_RuntimeParameters()
 width = sl_get_width(camera_id) # 1920
 height = sl_get_height(camera_id) # 1080
 
-image_ptr = sl_mat_create_new(width, height, ZED.SL_MAT_TYPE_U8_C4, ZED.SL_MEM_CPU)
+image_ptr = sl_mat_create_new(width, 
+                              height, 
+                              ZED.SL_MAT_TYPE_U8_C4, 
+                              ZED.SL_MEM_CPU)
 
 # Capture 50 frames and stop
 i = 0
 while (i < 50)
-	# Grab an image
-	state = sl_grab(camera_id, rt_param)
+    # Grab an image
+    state = sl_grab(camera_id, rt_param)
     if state == SL_ERROR_CODE(0)
 	    # Get the left image
-	    sl_retrieve_image(camera_id, image_ptr, ZED.SL_VIEW_LEFT, ZED.SL_MEM_CPU, width, height)
-        println("Image resolution: $(sl_mat_get_width(image_ptr)) x $(sl_mat_get_height(image_ptr)) || $(sl_get_current_timestamp(camera_id))")
+	    sl_retrieve_image(camera_id, 
+                          image_ptr, 
+                          ZED.SL_VIEW_LEFT, 
+                          ZED.SL_MEM_CPU, 
+                          width, 
+                          height)
+        w = sl_mat_get_width(image_ptr)
+        h = sl_mat_get_height(image_ptr)
+        timestamp = sl_get_current_timestamp(camera_id)
+        println("Image resolution: $(h) x $(w) || $(timestamp)")
         i += 1
     end
 end
