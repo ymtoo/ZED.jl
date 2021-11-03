@@ -1,5 +1,6 @@
 export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
-	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_SENSING_MODE, SL_DEPTH_MODE, SL_FLIP_MODE, SL_MAT_TYPE
+	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_SENSING_MODE, SL_DEPTH_MODE, SL_FLIP_MODE, 
+	SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
 
 export SL_InitParameters, SL_RuntimeParameters
 
@@ -158,6 +159,16 @@ end
 	SL_FLIP_MODE_AUTO # Live mode: use the camera orientation (if an IMU is available) to set the flip mode. SVO mode: read the state of this enum when recorded
 end
 
+"""
+Lists available compression modes for SVO recording.
+
+SL_SVO_COMPRESSION_MODE_LOSSLESS is an improvement of previous lossless compression (used in ZED Explorer), even if size may be bigger, compression time is much faster.
+"""
+@enum SL_SVO_COMPRESSION_MODE begin
+	SL_SVO_COMPRESSION_MODE_LOSSLESS # PNG/ZSTD (lossless) CPU based compression : avg size = 42% (of RAW).
+	SL_SVO_COMPRESSION_MODE_H264 # H264(AVCHD) GPU based compression : avg size = 1% (of RAW). Requires a NVIDIA GPU
+	SL_SVO_COMPRESSION_MODE_H265 # H265(HEVC) GPU based compression: avg size = 1% (of RAW). Requires a NVIDIA GPU, Pascal architecture or newer
+end
 
 """
 List available Mat formats.

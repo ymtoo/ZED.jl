@@ -1,5 +1,6 @@
 export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl_is_opened,
-    sl_get_sdk_version, sl_get_camera_firmware, sl_grab
+    sl_get_sdk_version, sl_get_camera_firmware, sl_grab, sl_enable_recording,
+    sl_disable_recording, sl_pause_recording
 
 export sl_get_width, sl_get_height, sl_get_current_timestamp
 
@@ -59,8 +60,8 @@ Opens the camera depending on the init parameters.
 - ip : ip of the camera to open (for Stream input).
 - stream_port : port of the camera to open (for Stream input).
 - output_file : sdk verbose log file. Redirect the SDK verbose message to file.
-- opt_settings_path : optional settings path. Equivalent to `InitParameters::optional_settings_path`.
-- opencv_calib_path : optional openCV calibration file. Equivalent to `InitParameters::optional_opencv_calibration_file`.
+- opt\\_settings\\_path : optional settings path. Equivalent to `InitParameters::optional_settings_path`.
+- opencv\\_calib\\_path : optional openCV calibration file. Equivalent to `InitParameters::optional_opencv_calibration_file`.
 
 # Returns
 - an error code giving information about the internal process. If SUCCESS (0) is returned, the camera is ready to use. 
@@ -136,6 +137,57 @@ function sl_grab(camera_id::T, rt_param::SL_RuntimeParameters) where {T<:Integer
     SL_ERROR_CODE(err)
 end
 
+"""
+Creates a file for recording the ZED's output into a .SVO or .AVI video.
+An SVO is Stereolabs' own format designed for the ZED. It holds the video 
+feed with timestamps as well as info about the camera used to record it.
+
+# Arguments
+- camera_id : id of the camera instance.
+- filename : filename of the SVO file.
+- compression\\_mode : compression mode. Can be one for the `SL_SVO_COMPRESSION_MODE` enum.
+- bitrate : overrides default bitrate of the SVO file, in KBits/s. Only works if `SVO_COMPRESSION_MODE` is H264 or H265.
+- target_fps : defines the target framerate for the recording module.
+- transcode : in case of streaming input, if set to false, it will avoid decoding/re-encoding and convert directly streaming input to a SVO file.
+              This saves a encoding session and can be especially useful on NVIDIA Geforce cards where the number of encoding session is limited.
+
+# Returns
+- an ERROR_CODE that defines if SVO file was successfully created and can be filled with images.
+"""
+function sl_enable_recording(camera_id::T, 
+                             filename::AbstractString, 
+                             compression_mode::SL_SVO_COMPRESSION_MODE, 
+                             bitrate::T, 
+                             target_fps::T, 
+                             transcode::Bool) where {T<:Integer}
+    err = ccall((:sl_enable_recording, zed), 
+                Cint, 
+                (Cint, Cstring, Cuint, Cuint, Cint, Cuchar), 
+                Cint(camera_id), filename, compression_mode, Cuint(bitrate), 
+                target_fps, transcode)
+    SL_ERROR_CODE(err)
+end
+
+"""
+Disables the recording initiated by `sl_enable_recording()` and closes the generated file.
+
+# Arguments
+- camera_id : id of the camera instance.
+"""
+function sl_disable_recording(camera_id::T) where {T<:Integer}
+    ccall((:sl_disable_recording, zed), Cvoid, (Cint,), Cint(camera_id))
+end
+
+"""
+Pauses or resumes the recording.
+
+# Arguments
+- camera_id : id of the camera instance.
+- status : if true, the recording is paused. If false, the recording is resumed.
+"""
+function sl_pause_recording(camera_id::T, status::Bool) where {T<:Integer}
+    ccall((:sl_pause_recording, zed), Cvoid, (Cint, Cuchar), Cint(camera_id), status)
+end
 
 ############################# Camera ##############################################################
 

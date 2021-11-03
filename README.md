@@ -4,6 +4,7 @@ This is a Julia wrapper around [zed-c-api](https://github.com/stereolabs/zed-c-a
 
 ## Installation
 ### Prerequisites
+- ZED SDK 3.6
 - You must have zed-c-api installed. (See the [build & install instructions](https://github.com/stereolabs/zed-c-api#installing-the-c-api))
 - Supported OS: Linux
 
@@ -12,15 +13,17 @@ This is a Julia wrapper around [zed-c-api](https://github.com/stereolabs/zed-c-a
 ```julia
 using ZED
 
-# open camera 
+# create a ZED camera
 camera_id = 0
 sl_create_camera(camera_id)
 
 init_param = SL_InitParameters(camera_id)
+init_param.resolution = ZED.SL_RESOLUTION_HD720
 init_param.depth_maximum_distance = 40
 init_param.depth_minimum_distance = -1
 init_param.coordinate_unit = ZED.SL_UNIT_METER
 
+# open the camera
 state = sl_open_camera(camera_id, init_param, "", "", 0, "", "", "")
 if state != 0
     println("Error Open")
@@ -44,7 +47,7 @@ while (i < 50)
     state = sl_grab(camera_id, rt_param)
     if state == SL_ERROR_CODE(0)
 	    # Get the left image
-	    sl_retrieve_image(camera_id, 
+        sl_retrieve_image(camera_id, 
                           image_ptr, 
                           ZED.SL_VIEW_LEFT, 
                           ZED.SL_MEM_CPU, 
@@ -58,6 +61,53 @@ while (i < 50)
     end
 end
 
+sl_close_camera(camera_id)
+```
+
+### SVO Recording
+```julia
+using Dates
+using ZED
+
+# create a ZED camera
+camera_id = 0
+sl_create_camera(camera_id)
+
+init_param = SL_InitParameters(camera_id)
+init_param.resolution = ZED.SL_RESOLUTION_HD720
+init_param.depth_maximum_distance = 40
+init_param.depth_minimum_distance = -1
+init_param.coordinate_unit = ZED.SL_UNIT_METER
+
+# open the camera
+state = sl_open_camera(camera_id, init_param, "", "", 0, "", "", "")
+if state != 0
+    println("Error Open")
+    return 1
+end
+
+# enable recording
+path_output = "demo.svo" # save to the current directory
+compression = ZED.SL_SVO_COMPRESSION_MODE_LOSSLESS
+bitrate = 7000
+fps = 30
+returned_state = sl_enable_recording(camera_id,
+                                     path_output,
+                                     compression,
+                                     bitrate,
+                                     fps,
+                                     false)
+
+totalrecordtime = Millisecond(30000) # 30 seconds
+currenttime = now()
+rt_param = SL_RuntimeParameters()
+@info "Start recording..."
+while now() - currenttime < totalrecordtime
+    state = sl_grab(camera_id, rt_param)
+    state != SL_ERROR_CODE(0) && break
+end
+
+sl_disable_recording(camera_id)
 sl_close_camera(camera_id)
 ```
 
@@ -75,6 +125,7 @@ sl_close_camera(camera_id)
 - SL_SENSING_MODE
 - SL_DEPTH_MODE
 - SL_FLIP_MODE
+- SL_SVO_COMPRESSION_MODE
 - SL_MAT_TYPE
 - SL_InitParameters
 - SL_RuntimeParameters
@@ -89,6 +140,9 @@ sl_close_camera(camera_id)
 - sl_get_sdk_version 
 - sl_get_camera_firmware
 - sl_grab
+- sl_enable_recording
+- sl_disable_recording
+- sl_pause_recording
 - sl_get_width
 - sl_get_height
 - sl_get_current_timestamp
