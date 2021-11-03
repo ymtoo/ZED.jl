@@ -2,11 +2,16 @@
 
 This is a Julia wrapper around [zed-c-api](https://github.com/stereolabs/zed-c-api) for the [ZED SDK](https://www.stereolabs.com/developers/release/).
 
-## Installation
-### Prerequisites
+## Prerequisites
 - ZED SDK 3.6
-- You must have zed-c-api installed. (See the [build & install instructions](https://github.com/stereolabs/zed-c-api#installing-the-c-api))
+- zed-c-api (See the [build & install instructions](https://github.com/stereolabs/zed-c-api#installing-the-c-api))
 - Supported OS: Linux
+
+## Installation
+```julia-repl
+julia>]
+pkg> add https://github.com/ymtoo/ZED.jl
+```
 
 ## Usage
 ### Tutorial 2: Image capture
@@ -32,8 +37,8 @@ end
 
 rt_param = SL_RuntimeParameters()
 
-width = sl_get_width(camera_id) # 1920
-height = sl_get_height(camera_id) # 1080
+width = sl_get_width(camera_id) 
+height = sl_get_height(camera_id) 
 
 image_ptr = sl_mat_create_new(width, 
                               height, 
