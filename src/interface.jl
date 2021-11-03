@@ -222,10 +222,13 @@ Get the Timestamp at the time the frame has been extracted from USB stream. (sho
 
 # Arguments
 - camera_id : id of the camera instance.
+- indatetime : if false, timestamp is in integer, else in datetime.
 
 # Return
 - the Camera timestamp.
 """
-function sl_get_current_timestamp(camera_id::T) where {T<:Integer}
-    ccall((:sl_get_current_timestamp, zed), Culonglong, (Cint,), Cint(camera_id))
+function sl_get_current_timestamp(camera_id::T; indatetime=false) where {T<:Integer}
+    ts = ccall((:sl_get_current_timestamp, zed), Culonglong, (Cint,), Cint(camera_id))
+    x = Int128(ts)
+    indatetime ? nanounix2datetime(x) : x
 end

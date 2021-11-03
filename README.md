@@ -60,7 +60,7 @@ while (i < 50)
                           height)
         w = sl_mat_get_width(image_ptr)
         h = sl_mat_get_height(image_ptr)
-        timestamp = sl_get_current_timestamp(camera_id)
+        timestamp = sl_get_current_timestamp(camera_id; indatetime=true)
         println("Image resolution: $(h) x $(w) || $(timestamp)")
         i += 1
     end

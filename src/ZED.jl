@@ -1,7 +1,9 @@
 module ZED
 
+using Dates
 using DocStringExtensions
 
+include("utils.jl")
 include("types.jl")
 include("interface.jl")
 include("mat.jl")
