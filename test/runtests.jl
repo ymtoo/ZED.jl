@@ -16,7 +16,7 @@ using Test
 
 end
 
-@testset "ZED" begin
+@testset "interface" begin
 
     [@test typeof(sl_find_usb_device(USB_DEVICE(i))) == Bool for i ∈ 0:2]
     @test typeof(sl_get_sdk_version()) == String
@@ -27,13 +27,32 @@ end
 
     width = 100
     height = 200
+    mat_types = [ZED.SL_MAT_TYPE_U8_C1,
+                 ZED.SL_MAT_TYPE_U8_C2,
+                 ZED.SL_MAT_TYPE_U8_C3,
+                 ZED.SL_MAT_TYPE_U8_C4,
+                 ZED.SL_MAT_TYPE_F32_C1,
+                 ZED.SL_MAT_TYPE_F32_C2,
+                 ZED.SL_MAT_TYPE_F32_C3,
+                 ZED.SL_MAT_TYPE_F32_C4]
+    numchannels = [1,2,3,4,1,2,3,4]
+    buffer_types = [Cuchar, Cuchar, Cuchar, Cuchar, Float32, Float32, Float32, Float32]
     mem = ZED.SL_MEM_CPU
-    image_ptr = sl_mat_create_new(width, height, ZED.SL_MAT_TYPE_U8_C4, mem)
-    @test sl_mat_is_init(image_ptr) === true
-    @test sl_mat_get_width(image_ptr) == width
-    @test sl_mat_get_height(image_ptr) == height
-    @test sl_mat_get_channels(image_ptr) == 4
-    sl_mat_free(image_ptr, mem)
-    @test sl_mat_is_init(image_ptr) === false
+    for (mat_type, numchannel, buffer_type) ∈ zip(mat_types, numchannels, buffer_types)
+        image_ptr = sl_mat_create_new(width, height, mat_type, mem)
+        @test sl_mat_is_init(image_ptr) === true
+        @test sl_mat_get_height(image_ptr) == height
+        @test sl_mat_get_channels(image_ptr) == numchannel
+        @test sl_mat_get_memory_type(image_ptr) == mem
+        value = buffer_type(100)
+        sl_mat_set_value_uchar(image_ptr, 1, 1, value, mem)
+
+        sl_mat_free(image_ptr, mem)
+        @test sl_mat_is_init(image_ptr) === false
+    end
+
+   
+    
+
 
 end
