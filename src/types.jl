@@ -1,6 +1,6 @@
 export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
-	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_SENSING_MODE, SL_DEPTH_MODE, SL_FLIP_MODE, 
-	SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
+	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_VIEW, SL_SENSING_MODE, 
+	SL_DEPTH_MODE, SL_FLIP_MODE, SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
 
 export SL_InitParameters, SL_RuntimeParameters
 
@@ -14,31 +14,31 @@ end
 Lists error codes in the ZED SDK.
 """
 @enum SL_ERROR_CODE begin
-	SL_ERROR_CODE_SUCCESS # Standard code for successful behavior.*/
-	SL_ERROR_CODE_FAILURE # Standard code for unsuccessful behavior.*/
-	SL_ERROR_CODE_NO_GPU_COMPATIBLE # No GPU found or CUDA capability of the device is not supported.*/
-	SL_ERROR_CODE_NOT_ENOUGH_GPU_MEMORY # Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).*/
-	SL_ERROR_CODE_CAMERA_NOT_DETECTED # The ZED camera is not plugged or detected.*/
-	SL_ERROR_CODE_SENSORS_NOT_INITIALIZED # The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.*/
-	SL_ERROR_CODE_SENSORS_NOT_AVAILABLE # a ZED-M or ZED2/2i camera is detected but the sensors (imu,barometer...) cannot be opened. Only for ZED-M or ZED2/2i devices. Unplug/replug is required*/
-	SL_ERROR_CODE_INVALID_RESOLUTION # In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage */
-	SL_ERROR_CODE_LOW_USB_BANDWIDTH # This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).*/
-	SL_ERROR_CODE_CALIBRATION_FILE_NOT_AVAILABLE # ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.*/
-	SL_ERROR_CODE_INVALID_CALIBRATION_FILE # ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.*/
-	SL_ERROR_CODE_INVALID_SVO_FILE # The provided SVO file is not valid.*/
-	SL_ERROR_CODE_SVO_RECORDING_ERROR # An recorder related error occurred (not enough free storage, invalid file).*/
-	SL_ERROR_CODE_SVO_UNSUPPORTED_COMPRESSION # An SVO related error when NVIDIA based compression cannot be loaded.*/
-	SL_ERROR_CODE_END_OF_SVOFILE_REACHED # SVO end of file has been reached, and no frame will be available until the SVO position is reset.*/
-	SL_ERROR_CODE_INVALID_COORDINATE_SYSTEM # The requested coordinate system is not available.*/
-	SL_ERROR_CODE_INVALID_FIRMWARE # The firmware of the ZED is out of date. Update to the latest version.*/
-	SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS # An invalid parameter has been set for the function. */
+	SL_ERROR_CODE_SUCCESS # Standard code for successful behavior.
+	SL_ERROR_CODE_FAILURE # Standard code for unsuccessful behavior.
+	SL_ERROR_CODE_NO_GPU_COMPATIBLE # No GPU found or CUDA capability of the device is not supported.
+	SL_ERROR_CODE_NOT_ENOUGH_GPU_MEMORY # Not enough GPU memory for this depth mode, try a different mode (such as PERFORMANCE), or increase the minimum depth value (see InitParameters::depth_minimum_distance).
+	SL_ERROR_CODE_CAMERA_NOT_DETECTED # The ZED camera is not plugged or detected.
+	SL_ERROR_CODE_SENSORS_NOT_INITIALIZED # The MCU that controls the sensors module has an invalid Serial Number. You can try to recover it launching the 'ZED Diagnostic' tool from the command line with the option '-r'.
+	SL_ERROR_CODE_SENSORS_NOT_AVAILABLE # a ZED-M or ZED2/2i camera is detected but the sensors (imu,barometer...) cannot be opened. Only for ZED-M or ZED2/2i devices. Unplug/replug is required
+	SL_ERROR_CODE_INVALID_RESOLUTION # In case of invalid resolution parameter, such as a upsize beyond the original image size in Camera::retrieveImage 
+	SL_ERROR_CODE_LOW_USB_BANDWIDTH # This issue can occurs when you use multiple ZED or a USB 2.0 port (bandwidth issue).
+	SL_ERROR_CODE_CALIBRATION_FILE_NOT_AVAILABLE # ZED calibration file is not found on the host machine. Use ZED Explorer or ZED Calibration to get one.
+	SL_ERROR_CODE_INVALID_CALIBRATION_FILE # ZED calibration file is not valid, try to download the factory one or recalibrate your camera using 'ZED Calibration'.
+	SL_ERROR_CODE_INVALID_SVO_FILE # The provided SVO file is not valid.
+	SL_ERROR_CODE_SVO_RECORDING_ERROR # An recorder related error occurred (not enough free storage, invalid file).
+	SL_ERROR_CODE_SVO_UNSUPPORTED_COMPRESSION # An SVO related error when NVIDIA based compression cannot be loaded.
+	SL_ERROR_CODE_END_OF_SVOFILE_REACHED # SVO end of file has been reached, and no frame will be available until the SVO position is reset.
+	SL_ERROR_CODE_INVALID_COORDINATE_SYSTEM # The requested coordinate system is not available.
+	SL_ERROR_CODE_INVALID_FIRMWARE # The firmware of the ZED is out of date. Update to the latest version.
+	SL_ERROR_CODE_INVALID_FUNCTION_PARAMETERS # An invalid parameter has been set for the function. 
 	SL_ERROR_CODE_CUDA_ERROR # In grab() or retrieveXXX() only, a CUDA error has been detected in the process. Activate verbose in SL_Camera::open for more info.*/
-	SL_ERROR_CODE_CAMERA_NOT_INITIALIZED # In grab() only, ZED SDK is not initialized. Probably a missing call to SL_Camera::open.*/
-	SL_ERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE # Your NVIDIA driver is too old and not compatible with your current CUDA version. */
-	SL_ERROR_CODE_INVALID_FUNCTION_CALL # The call of the function is not valid in the current context. Could be a missing call of SL_Camera::open. */
-	SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION # The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. */
-	SL_ERROR_CODE_INCOMPATIBLE_SDK_VERSION # The installed SDK is incompatible SDK used to compile the program. */
-	SL_ERROR_CODE_INVALID_AREA_FILE # The given area file does not exist, check the path. */
+	SL_ERROR_CODE_CAMERA_NOT_INITIALIZED # In grab() only, ZED SDK is not initialized. Probably a missing call to SL_Camera::open.
+	SL_ERROR_CODE_NVIDIA_DRIVER_OUT_OF_DATE # Your NVIDIA driver is too old and not compatible with your current CUDA version. 
+	SL_ERROR_CODE_INVALID_FUNCTION_CALL # The call of the function is not valid in the current context. Could be a missing call of SL_Camera::open. 
+	SL_ERROR_CODE_CORRUPTED_SDK_INSTALLATION # The SDK wasn't able to load its dependencies or somes assets are missing, the installer should be launched. 
+	SL_ERROR_CODE_INCOMPATIBLE_SDK_VERSION # The installed SDK is incompatible SDK used to compile the program. 
+	SL_ERROR_CODE_INVALID_AREA_FILE # The given area file does not exist, check the path. 
 	SL_ERROR_CODE_INCOMPATIBLE_AREA_FILE # The area file does not contain enought data to be used or the SL_DEPTH_MODE used during the creation of the area file is different from the one currently set. */
 	SL_ERROR_CODE_CAMERA_FAILED_TO_SETUP # Failed to open the camera at the proper resolution. Try another resolution or make sure that the UVC driver is properly installed.*/
 	SL_ERROR_CODE_CAMERA_DETECTION_ISSUE # Your ZED can not be opened, try replugging it to another USB port or flipping the USB-C connector.*/
@@ -104,7 +104,29 @@ Defines which type of position matrix is used to store camera path and pose.
 """
 @enum SL_REFERENCE_FRAME begin
 	SL_REFERENCE_FRAME_WORLD  # The transform of SL_Pose will contains the motion with reference to the world frame (previously called PATH).
-	SL_REFERENCE_FRAME_CAMERA #The transform of SL_Pose will contains the motion with reference to the previous camera frame (previously called POSE).
+	SL_REFERENCE_FRAME_CAMERA # The transform of SL_Pose will contains the motion with reference to the previous camera frame (previously called POSE).
+end
+
+"""
+Lists available camera settings for the ZED camera (contrast, hue, saturation, gain...).
+Warning: GAIN and EXPOSURE are linked in auto/default mode (see `SL_Camera::setCameraSettings`).
+"""
+@enum SL_VIDEO_SETTINGS begin
+	SL_VIDEO_SETTINGS_BRIGHTNESS # Defines the brightness control. Affected value should be between 0 and 8.
+	SL_VIDEO_SETTINGS_CONTRAST # Defines the contrast control. Affected value should be between 0 and 8.
+	SL_VIDEO_SETTINGS_HUE # Defines the hue control. Affected value should be between 0 and 11.
+	SL_VIDEO_SETTINGS_SATURATION # Defines the saturation control. Affected value should be between 0 and 8.
+	SL_VIDEO_SETTINGS_SHARPNESS # Defines the digital sharpening control. Affected value should be between 0 and 8.
+	SL_VIDEO_SETTINGS_GAMMA # Defines the ISP gamma control. Affected value should be between 1 and 9.
+	SL_VIDEO_SETTINGS_GAIN # Defines the gain control. Affected value should be between 0 and 100 for manual control.
+	SL_VIDEO_SETTINGS_EXPOSURE # Defines the exposure control. Affected value should be between 0 and 100 for manual control. The exposition is mapped linearly in a percentage of the following max values. 
+							   # Special case for the setExposure(0) that corresponds to 0.17072ms. The conversion to milliseconds depends on the framerate: <ul><li>15fps setExposure(100) -> 19.97ms</li><li>30fps setExposure(100) -> 19.97ms</li><li>60fps setExposure(100) -> 10.84072ms</li><li>100fps setExposure(100) -> 10.106624ms</li></ul>
+	SL_VIDEO_SETTINGS_AEC_AGC # Defines if the Gain and Exposure are in automatic mode or not. Setting a Gain or Exposure through @GAIN or @EXPOSURE values will automatically set this value to 0.
+	SL_VIDEO_SETTINGS_AEC_AGC_ROI # Defines the region of interest for automatic exposure/gain computation. To be used with overloaded @setCameraSettings/@getCameraSettings functions.
+	SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE # Defines the color temperature value. Setting a value will automatically set @WHITEBALANCE_AUTO to 0. Affected value should be between 2800 and 6500 with a step of 100.
+	SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO # Defines if the White balance is in automatic mode or not
+	SL_VIDEO_SETTINGS_LED_STATUS # Defines the status of the camera front LED. Set to 0 to disable the light, 1 to enable the light. Default value is on. Requires Camera FW 1523 at least.
+	SL_VIDEO_SETTINGS_LAST
 end
 
 """

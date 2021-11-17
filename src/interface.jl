@@ -2,7 +2,7 @@ export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl
     sl_get_sdk_version, sl_get_camera_firmware, sl_grab, sl_enable_recording,
     sl_disable_recording, sl_pause_recording
 
-export sl_get_width, sl_get_height, sl_get_current_timestamp
+export sl_get_width, sl_get_height, sl_get_current_timestamp, sl_get_svo_number_of_frames
 
 ############################# Utility Functions ###################################################
 
@@ -231,4 +231,29 @@ function sl_get_current_timestamp(camera_id::T; indatetime=false) where {T<:Inte
     ts = ccall((:sl_get_current_timestamp, zed), Culonglong, (Cint,), Cint(camera_id))
     x = Int128(ts)
     indatetime ? nanounix2datetime(x) : x
+end
+
+"""
+Gets the total number of frames in the loaded SVO file.
+
+# Arguments
+- camera_id : id of the camera instance.
+
+# Return
+- the total number of frames in the SVO file (-1 if the SDK is not reading a SVO).
+"""
+function sl_get_svo_number_of_frames(camera_id::T) where {T<:Integer}
+    ccall((:sl_get_svo_number_of_frames, zed), Cint, (Cint,), camera_id)
+end
+
+"""
+Sets a value in the ZED's camera settings.
+
+# Arguments
+- camera_id : id of the camera instance.
+- mode : Setting to be changed
+- value : new value
+"""
+function sl_set_camera_settings(camera_id::T, mode::SL_VIDEO_SETTINGS, value::T) where {T<:Integer}
+
 end

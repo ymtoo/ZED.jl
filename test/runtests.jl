@@ -28,24 +28,40 @@ end
     width = 100
     height = 200
     mat_types = [ZED.SL_MAT_TYPE_U8_C1,
-                 ZED.SL_MAT_TYPE_U8_C2,
-                 ZED.SL_MAT_TYPE_U8_C3,
-                 ZED.SL_MAT_TYPE_U8_C4,
-                 ZED.SL_MAT_TYPE_F32_C1,
-                 ZED.SL_MAT_TYPE_F32_C2,
-                 ZED.SL_MAT_TYPE_F32_C3,
-                 ZED.SL_MAT_TYPE_F32_C4]
-    numchannels = [1,2,3,4,1,2,3,4]
-    buffer_types = [Cuchar, Cuchar, Cuchar, Cuchar, Float32, Float32, Float32, Float32]
+                #  ZED.SL_MAT_TYPE_U8_C2,
+                #  ZED.SL_MAT_TYPE_U8_C3,
+                #  ZED.SL_MAT_TYPE_U8_C4,
+                 ZED.SL_MAT_TYPE_F32_C1,]
+                #  ZED.SL_MAT_TYPE_F32_C2,
+                #  ZED.SL_MAT_TYPE_F32_C3,
+                #  ZED.SL_MAT_TYPE_F32_C4]
+    numchannels = [1,1]#[1,2,3,4,1,2,3,4]
+    buffer_types = [Cuchar, Cfloat]#[Cuchar, Cuchar, Cuchar, Cuchar, Float32, Float32, Float32, Float32]
+    set_value_functions = [sl_mat_set_value_uchar,
+                           sl_mat_set_value_float]
+    get_value_functions = [sl_mat_get_value_uchar,
+                           sl_mat_get_value_float]
     mem = ZED.SL_MEM_CPU
-    for (mat_type, numchannel, buffer_type) ∈ zip(mat_types, numchannels, buffer_types)
+    for (mat_type, numchannel, buffer_type, set_value, get_value) ∈ zip(mat_types, 
+                                                                        numchannels, 
+                                                                        buffer_types,
+                                                                        set_value_functions,
+                                                                        get_value_functions)
         image_ptr = sl_mat_create_new(width, height, mat_type, mem)
         @test sl_mat_is_init(image_ptr) === true
         @test sl_mat_get_height(image_ptr) == height
         @test sl_mat_get_channels(image_ptr) == numchannel
         @test sl_mat_get_memory_type(image_ptr) == mem
-        value = buffer_type(100)
-        sl_mat_set_value_uchar(image_ptr, 1, 1, value, mem)
+
+        col = rand(1:width)
+        row = rand(1:height)
+        value = if buffer_type == Cuchar
+            [buffer_type(rand(1:100)) for _ ∈ 1:numchannel]
+        else
+            [buffer_type(randn()) for _ ∈ 1:numchannel]
+        end
+        set_value(image_ptr, col, row, value, mem)
+        @test get_value(image_ptr, col, row, mem) == value
 
         sl_mat_free(image_ptr, mem)
         @test sl_mat_is_init(image_ptr) === false
