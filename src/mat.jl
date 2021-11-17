@@ -82,7 +82,7 @@ function sl_mat_set_value_uchar(image_ptr,
                                 row::T, 
                                 value::Array{Cuchar}, 
                                 mem::SL_MEM) where {T<:Integer}
-    length(value) > 1 && error("`value` is an array of one element.")
+    length(value) > 1 && throw(ArgumentError("`value` is an array of one element."))
     sl_mat_set_value_uchar(image_ptr, col, row, first(value), mem)
 end
 
@@ -102,7 +102,7 @@ function sl_mat_set_value_float(image_ptr,
                                 row::T, 
                                 value::Array{VT}, 
                                 mem::SL_MEM) where {T<:Integer, VT<:AbstractFloat}
-    length(value) > 1 && error("`value` is an array of one element.")
+    length(value) > 1 && throw(ArgumentError("`value` is an array of one element."))
     sl_mat_set_value_float(image_ptr, col, row, first(value), mem)
 end
 
