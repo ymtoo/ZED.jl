@@ -28,19 +28,31 @@ end
     width = 100
     height = 200
     mat_types = [ZED.SL_MAT_TYPE_U8_C1,
-                #  ZED.SL_MAT_TYPE_U8_C2,
-                #  ZED.SL_MAT_TYPE_U8_C3,
-                #  ZED.SL_MAT_TYPE_U8_C4,
-                 ZED.SL_MAT_TYPE_F32_C1,]
-                #  ZED.SL_MAT_TYPE_F32_C2,
-                #  ZED.SL_MAT_TYPE_F32_C3,
-                #  ZED.SL_MAT_TYPE_F32_C4]
-    numchannels = [1,1]#[1,2,3,4,1,2,3,4]
-    buffer_types = [Cuchar, Cfloat]#[Cuchar, Cuchar, Cuchar, Cuchar, Float32, Float32, Float32, Float32]
+                 ZED.SL_MAT_TYPE_U8_C2,
+                 ZED.SL_MAT_TYPE_U8_C3,
+                 ZED.SL_MAT_TYPE_U8_C4,
+                 ZED.SL_MAT_TYPE_F32_C1,
+                 ZED.SL_MAT_TYPE_F32_C2,
+                 ZED.SL_MAT_TYPE_F32_C3,
+                 ZED.SL_MAT_TYPE_F32_C4]
+    numchannels = [1,2,3,4,1,2,3,4]
+    buffer_types = [Cuchar, Cuchar, Cuchar, Cuchar, Cfloat, Cfloat, Cfloat, Cfloat]
     set_value_functions = [sl_mat_set_value_uchar,
-                           sl_mat_set_value_float]
+                           sl_mat_set_value_uchar2,
+                           sl_mat_set_value_uchar3,
+                           sl_mat_set_value_uchar4,
+                           sl_mat_set_value_float,
+                           sl_mat_set_value_float2,
+                           sl_mat_set_value_float3,
+                           sl_mat_set_value_float4]
     get_value_functions = [sl_mat_get_value_uchar,
-                           sl_mat_get_value_float]
+                           sl_mat_get_value_uchar2,
+                           sl_mat_get_value_uchar3,
+                           sl_mat_get_value_uchar4,
+                           sl_mat_get_value_float,
+                           sl_mat_get_value_float2,
+                           sl_mat_get_value_float3,
+                           sl_mat_get_value_float4]
     mem = ZED.SL_MEM_CPU
     for (mat_type, numchannel, buffer_type, set_value, get_value) ∈ zip(mat_types, 
                                                                         numchannels, 

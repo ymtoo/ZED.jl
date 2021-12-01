@@ -420,3 +420,65 @@ function SL_RuntimeParameters()
 						 Cint(100), 
 						 Cint(100))
 end
+
+############################# MAT Types ###########################################################
+
+"""
+uchar2
+"""
+mutable struct SL_Uchar2
+    x::Cuchar
+    y::Cuchar
+end
+SL_Uchar2() = SL_Uchar2(Cuchar(0), Cuchar(0))
+
+"""
+uchar3
+"""
+mutable struct SL_Uchar3 
+    x::Cuchar
+    y::Cuchar
+    z::Cuchar
+end
+SL_Uchar3() = SL_Uchar3(Cuchar(0), Cuchar(0), Cuchar(0))
+
+"""
+uchar4
+"""
+mutable struct SL_Uchar4
+    x::Cuchar
+    y::Cuchar
+    z::Cuchar
+    w::Cuchar
+end
+SL_Uchar4() = SL_Uchar4(Cuchar(0), Cuchar(0), Cuchar(0), Cuchar(0))
+
+"""
+Vector2
+"""
+mutable struct SL_Vector2 
+    x::Cfloat
+    y::Cfloat
+end
+SL_Vector2() = SL_Vector2(Cfloat(0), Cfloat(0))
+
+"""
+Vector3
+"""
+mutable struct SL_Vector3 
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+end
+SL_Vector3() = SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0))
+
+"""
+Vector4
+"""
+mutable struct SL_Vector4
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+    w::Cfloat
+end
+SL_Vector4() = SL_Vector4(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))
