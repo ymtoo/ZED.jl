@@ -1,6 +1,6 @@
 export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl_is_opened,
     sl_get_sdk_version, sl_get_camera_firmware, sl_grab, sl_enable_recording,
-    sl_disable_recording, sl_pause_recording
+    sl_disable_recording, sl_pause_recording, sl_get_svo_position, sl_set_svo_position
 
 export sl_get_width, sl_get_height, sl_get_current_timestamp, sl_get_svo_number_of_frames
 
@@ -187,6 +187,31 @@ Pauses or resumes the recording.
 """
 function sl_pause_recording(camera_id::T, status::Bool) where {T<:Integer}
     ccall((:sl_pause_recording, zed), Cvoid, (Cint, Cuchar), Cint(camera_id), status)
+end
+
+"""
+Gets the current position of the SVO being recorded to.
+
+# Arguments
+- camera_id : id of the camera instance.
+
+# Returns
+The current SVO position;
+"""
+function sl_get_svo_position(camera_id::T) where {T<:Integer}
+    ccall((:sl_get_svo_position, zed), Cint, (Cint,), camera_id)
+end
+
+"""
+Sets the playback cursor to the desired frame number in the SVO file.
+This function allows you to move around within a played-back SVO file. After calling, the next call to grab() will read the provided frame number.
+
+# Arguments
+- camera_id : id of the camera instance.
+- frame_number : the number of the deired frame to be decoded.
+"""
+function sl_set_svo_position(camera_id::T, frame_number::T) where {T<:Integer}
+    ccall((:sl_set_svo_position, zed), Cvoid, (Cint, Cint), camera_id, frame_number)
 end
 
 ############################# Camera ##############################################################

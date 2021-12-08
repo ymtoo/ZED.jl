@@ -30,7 +30,7 @@ init_param.coordinate_unit = ZED.SL_UNIT_METER
 
 # open the camera
 state = sl_open_camera(camera_id, init_param, "", "", 0, "", "", "")
-if state != 0
+if state != SL_ERROR_CODE(0)
     println("Error Open")
     return 1
 end
@@ -86,7 +86,7 @@ init_param.coordinate_unit = ZED.SL_UNIT_METER
 
 # open the camera
 state = sl_open_camera(camera_id, init_param, "", "", 0, "", "", "")
-if state != 0
+if state != SL_ERROR_CODE(0)
     println("Error Open")
     return 1
 end
@@ -113,6 +113,67 @@ while now() - currenttime < totalrecordtime
 end
 
 sl_disable_recording(camera_id)
+sl_close_camera(camera_id)
+```
+
+### SVO Playback
+```julia
+using ZED
+
+# create a ZED camera
+camera_id = 0
+sl_create_camera(camera_id)
+
+init_param = SL_InitParameters(camera_id)
+init_param.input_type = ZED.SL_INPUT_TYPE_SVO
+
+# open the camera
+path_svo = "demo.svo"
+state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
+if state != SL_ERROR_CODE(0)
+    println("Error Open")
+    return 1
+end
+
+numframes = sl_get_svo_number_of_frames(camera_id)
+@info "SVO contains $(numframes) frames"
+
+rt_param = SL_RuntimeParameters()
+
+width = sl_get_width(camera_id) 
+height = sl_get_height(camera_id) 
+
+image_ptr = sl_mat_create_new(width, 
+                              height, 
+                              ZED.SL_MAT_TYPE_U8_C4, 
+                              ZED.SL_MEM_CPU)
+
+frames = zeros(Cuchar, height, width, 4, numframes)
+i = 0
+while (i < numframes)
+    # Grab an image
+    state = sl_grab(camera_id, rt_param)
+    if state == SL_ERROR_CODE(0)
+	    # Get the left image
+        sl_retrieve_image(camera_id, 
+                          image_ptr, 
+                          ZED.SL_VIEW_LEFT, 
+                          ZED.SL_MEM_CPU, 
+                          width, 
+                          height)
+
+        frames[:,:,:,i+1] = getframe(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+        svo_position = get_svo_position(camera_id)
+        println("Get frame #$(svo_position).")
+        i += 1
+    elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
+        sl_set_svo_position(camera_id, 0)
+        break
+    else
+        println("Grab ZED : $(state)");
+        break
+    end
+end
 sl_close_camera(camera_id)
 ```
 
