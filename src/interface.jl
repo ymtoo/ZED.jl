@@ -185,7 +185,7 @@ Pauses or resumes the recording.
 - camera_id : id of the camera instance.
 - status : if true, the recording is paused. If false, the recording is resumed.
 """
-function sl_pause_recording(camera_id::T, status::Bool) where {T<:Integer}
+function sl_pause_recording(camera_id::T, status::Bool) where {T<:Integer}    
     ccall((:sl_pause_recording, zed), Cvoid, (Cint, Cuchar), Cint(camera_id), status)
 end
 
@@ -211,6 +211,8 @@ This function allows you to move around within a played-back SVO file. After cal
 - frame_number : the number of the deired frame to be decoded.
 """
 function sl_set_svo_position(camera_id::T, frame_number::T) where {T<:Integer}
+    numframes = sl_get_svo_number_of_frames(camera_id)
+    frame_number > numframes && @warn "`frame_number` is greater than total number of frames"
     ccall((:sl_set_svo_position, zed), Cvoid, (Cint, Cint), camera_id, frame_number)
 end
 

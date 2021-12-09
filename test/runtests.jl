@@ -20,13 +20,70 @@ end
 
     [@test typeof(sl_find_usb_device(USB_DEVICE(i))) == Bool for i ∈ 0:2]
     @test typeof(sl_get_sdk_version()) == String
+    
+    camera_id = 0
+    sl_create_camera(camera_id)
+
+    init_param = SL_InitParameters(camera_id)
+    init_param.input_type = ZED.SL_INPUT_TYPE_SVO
+    init_param.svo_real_time_mode = false
+
+    path_svo = "./data/dummy.svo"
+    state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
+    @test state == SL_ERROR_CODE(0)
+
+    numframes = sl_get_svo_number_of_frames(camera_id)
+    @test numframes == 33
+
+    rt_param = SL_RuntimeParameters()
+
+    width = sl_get_width(camera_id) 
+    height = sl_get_height(camera_id) 
+    @test width == 1280
+    @test height == 720
+
+    image_ptr = sl_mat_create_new(width, 
+                              height, 
+                              ZED.SL_MAT_TYPE_U8_C4, 
+                              ZED.SL_MEM_CPU)
+
+    svo_position = sl_get_svo_position(camera_id)
+    @test svo_position == 0
+    frames = zeros(Cuchar, height, width, 4, numframes)
+    i = 0
+    while (i < numframes)
+        # Grab an image
+        state = sl_grab(camera_id, rt_param)
+        i += 1
+        if state == SL_ERROR_CODE(0)
+            # Get the left image
+            sl_retrieve_image(camera_id, 
+                            image_ptr, 
+                            ZED.SL_VIEW_LEFT, 
+                            ZED.SL_MEM_CPU, 
+                            width, 
+                            height)
+
+            svo_position = sl_get_svo_position(camera_id)
+            @test svo_position == i
+            frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+        elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
+            sl_set_svo_position(camera_id, 0)
+            svo_position = sl_get_svo_position(camera_id)
+            @test svo_position == 0
+            break
+        else
+            break
+        end
+    end
+    sl_close_camera(camera_id)
 
 end
 
 @testset "mat" begin
 
-    width = 100
-    height = 200
+    width = 10
+    height = 20
     mat_types = [ZED.SL_MAT_TYPE_U8_C1,
                  ZED.SL_MAT_TYPE_U8_C2,
                  ZED.SL_MAT_TYPE_U8_C3,
@@ -36,7 +93,7 @@ end
                  ZED.SL_MAT_TYPE_F32_C3,
                  ZED.SL_MAT_TYPE_F32_C4]
     numchannels = [1,2,3,4,1,2,3,4]
-    buffer_types = [Cuchar, Cuchar, Cuchar, Cuchar, Cfloat, Cfloat, Cfloat, Cfloat]
+    mateltypes = [Cuchar, Cuchar, Cuchar, Cuchar, Cfloat, Cfloat, Cfloat, Cfloat]
     set_value_functions = [sl_mat_set_value_uchar,
                            sl_mat_set_value_uchar2,
                            sl_mat_set_value_uchar3,
@@ -53,34 +110,55 @@ end
                            sl_mat_get_value_float2,
                            sl_mat_get_value_float3,
                            sl_mat_get_value_float4]
+    set_to_functions = [sl_mat_set_to_uchar,
+                        sl_mat_set_to_uchar2,
+                        sl_mat_set_to_uchar3,
+                        sl_mat_set_to_uchar4,
+                        sl_mat_set_to_float,
+                        sl_mat_set_to_float2,
+                        sl_mat_set_to_float3,
+                        sl_mat_set_to_float4,]
     mem = ZED.SL_MEM_CPU
-    for (mat_type, numchannel, buffer_type, set_value, get_value) ∈ zip(mat_types, 
-                                                                        numchannels, 
-                                                                        buffer_types,
-                                                                        set_value_functions,
-                                                                        get_value_functions)
+    for (mat_type, numchannel, mateltype, set_value, get_value, set_to) ∈ zip(mat_types, 
+                                                                              numchannels, 
+                                                                              mateltypes,
+                                                                              set_value_functions,
+                                                                              get_value_functions,
+                                                                              set_to_functions)
         image_ptr = sl_mat_create_new(width, height, mat_type, mem)
         @test sl_mat_is_init(image_ptr) === true
         @test sl_mat_get_height(image_ptr) == height
         @test sl_mat_get_channels(image_ptr) == numchannel
         @test sl_mat_get_memory_type(image_ptr) == mem
 
+        zerovalue = if mateltype == Cuchar
+            [mateltype(0) for _ ∈ 1:numchannel]
+        else
+            [mateltype(0) for _ ∈ 1:numchannel]
+        end
+        set_to_err = set_to(image_ptr, zerovalue, mem)
+        @test set_to_err == ZED.SL_ERROR_CODE_SUCCESS
+        frames = getframes(image_ptr, mat_type)
+        X = zeros(mateltype, height, width, numchannel) 
+        @test frames == X
+
         col = rand(1:width)
         row = rand(1:height)
-        value = if buffer_type == Cuchar
-            [buffer_type(rand(1:100)) for _ ∈ 1:numchannel]
+        value = if mateltype == Cuchar
+            [mateltype(rand(1:100)) for _ ∈ 1:numchannel]
         else
-            [buffer_type(randn()) for _ ∈ 1:numchannel]
+            [mateltype(randn()) for _ ∈ 1:numchannel]
         end
         set_value(image_ptr, col, row, value, mem)
         @test get_value(image_ptr, col, row, mem) == value
 
+        frames = getframes(image_ptr, mat_type)
+        @test size(frames) == (height, width, numchannel)
+        X[row,col,:] = value
+        @test frames == X
+
         sl_mat_free(image_ptr, mem)
         @test sl_mat_is_init(image_ptr) === false
     end
-
-   
-    
-
 
 end
