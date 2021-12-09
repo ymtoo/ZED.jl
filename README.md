@@ -126,9 +126,10 @@ sl_create_camera(camera_id)
 
 init_param = SL_InitParameters(camera_id)
 init_param.input_type = ZED.SL_INPUT_TYPE_SVO
+init_param.svo_real_time_mode = false
 
 # open the camera
-path_svo = "demo.svo"
+path_svo = "./test/data/dummy.svo"
 state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
 if state != SL_ERROR_CODE(0)
     println("Error Open")
@@ -153,6 +154,7 @@ i = 0
 while (i < numframes)
     # Grab an image
     state = sl_grab(camera_id, rt_param)
+    println(state)
     if state == SL_ERROR_CODE(0)
 	    # Get the left image
         sl_retrieve_image(camera_id, 
@@ -162,8 +164,9 @@ while (i < numframes)
                           width, 
                           height)
 
-        frames[:,:,:,i+1] = getframe(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
-        svo_position = get_svo_position(camera_id)
+        svo_position = sl_get_svo_position(camera_id)
+        frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+        
         println("Get frame #$(svo_position).")
         i += 1
     elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
