@@ -9,8 +9,10 @@ include("interface.jl")
 include("mat.jl")
 include("retrieve.jl")
 
+const LIBDIR = joinpath(dirname(pathof(@__MODULE__)), "..", "lib")
+
 const zed = if Sys.islinux()
-                "../lib/Linux/libsl_zed_c.so"
+                joinpath(LIBDIR, "Linux/libsl_zed_c.so")
             elseif Sys.iswindows()
                 # TODO
                 error("Not implemented")
