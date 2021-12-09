@@ -10,7 +10,7 @@ include("mat.jl")
 include("retrieve.jl")
 
 const zed = if Sys.islinux()
-                "/usr/local/zed/lib/libsl_zed_c.so"
+                "../lib/Linux/libsl_zed_c.so"
             elseif Sys.iswindows()
                 # TODO
                 error("Not implemented")
