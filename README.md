@@ -14,7 +14,7 @@ pkg> add https://github.com/ymtoo/ZED.jl
 ```
 
 ## Usage
-### Tutorial 2: Image capture
+### Tutorial 2: image capture
 ```julia
 using ZED
 
@@ -66,6 +66,111 @@ while (i < 50)
     end
 end
 
+sl_close_camera(camera_id)
+```
+
+### Tutorial 5: spatial mapping
+```julia
+using ZED
+
+# create a ZED camera
+camera_id = 0
+sl_create_camera(camera_id)
+
+init_param = SL_InitParameters(camera_id)
+init_param.camera_fps = 30
+init_param.resolution = ZED.SL_RESOLUTION_HD1080
+init_param.input_type = ZED.SL_INPUT_TYPE_USB
+init_param.camera_device_id = camera_id
+init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
+init_param.camera_disable_self_calib = false
+init_param.enable_image_enhancement = true
+init_param.svo_real_time_mode = true
+init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
+init_param.depth_stabilization = true
+init_param.depth_maximum_distance = 40
+init_param.depth_minimum_distance = -1
+init_param.coordinate_unit = ZED.SL_UNIT_METER
+init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP
+init_param.sdk_gpu_id = -1
+init_param.sdk_verbose = false
+init_param.sensors_required = false
+init_param.enable_right_side_measure = false
+
+# open the camera
+state = sl_open_camera(camera_id, init_param, "", "", 0, "", "", "")
+if state != SL_ERROR_CODE(0)
+    println("Error Open Camera $(state), exit program.")
+    return 1
+end
+
+tracking_param = SL_PositionalTrackingParameters()
+tracking_param.enable_area_memory = true
+tracking_param.enable_imu_fusion = true
+tracking_param.enable_pose_smothing = false
+tracking_param.set_as_static = false
+tracking_param.set_floor_as_origin = false
+
+state = sl_enable_positional_tracking(camera_id, tracking_param, "")
+if state != SL_ERROR_CODE(0)
+    println("Error Enable Tracking $(state), exit program.")
+    return 1
+end
+
+mapping_param = SL_SpatialMappingParameters()
+mapping_param.map_type = ZED.SL_SPATIAL_MAP_TYPE_MESH;
+mapping_param.max_memory_usage = 2048
+mapping_param.range_meter = 0
+mapping_param.resolution_meter = 0.05
+mapping_param.save_texture = true
+mapping_param.use_chunk_only = true
+mapping_param.reverse_vertex_order = false
+state = sl_enable_spatial_mapping(camera_id, mapping_param)
+if state != SL_ERROR_CODE(0)
+    println("Error Spatial Mapping $(state), exit program.")
+    return 1
+end
+
+rt_param = SL_RuntimeParameters()
+rt_param.enable_depth = true
+rt_param.confidence_threshold = 100
+rt_param.reference_frame = ZED.SL_REFERENCE_FRAME_CAMERA
+rt_param.sensing_mode = ZED.SL_SENSING_MODE_STANDARD
+rt_param.texture_confidence_threshold = 100
+
+width = sl_get_width(camera_id) 
+height = sl_get_height(camera_id) 
+
+i = 1
+while i ≤ 500
+    state = sl_grab(camera_id, rt_param) # Grab an image
+    if state == SL_ERROR_CODE(0)
+        map_state = sl_get_spatial_mapping_state(camera_id)
+        println("\r Images captured: $(i) / 500 || Spatial mapping state: $(map_state)")
+        i += 1
+    end
+end
+
+@info "Extracting Mesh..."
+# Extract the whole mesh.
+sl_extract_whole_spatial_map(camera_id)
+# Filter the mesh
+MAX_SUBMESH = 1000
+sl_filter_mesh(camera_id, 
+               ZED.SL_MESH_FILTER_MEDIUM, 
+               MAX_SUBMESH, 
+               MAX_SUBMESH, 
+               0, 
+               MAX_SUBMESH, 
+               0, 
+               0, 
+               MAX_SUBMESH)
+# Save the mesh
+@info "Saving Mesh ..."
+sl_save_mesh(camera_id, "mesh.obj", ZED.SL_MESH_FILE_FORMAT_OBJ)
+
+sl_disable_spatial_mapping(camera_id)
+sl_disable_positional_tracking(camera_id, "")
 sl_close_camera(camera_id)
 ```
 
@@ -198,6 +303,7 @@ sl_close_camera(camera_id)
 - SL_MAT_TYPE
 - SL_InitParameters
 - SL_RuntimeParameters
+- SL_PositionalTrackingParameters
 
 ### Interface functions
 - sl_unload_all_instances
@@ -225,6 +331,30 @@ sl_close_camera(camera_id)
 - sl_mat_get_height
 - sl_mat_get_channels
 - sl_mat_get_memory_type
+- sl_mat_set_value_uchar
+- sl_mat_set_value_uchar2
+- sl_mat_set_value_uchar3
+- sl_mat_set_value_uchar4
+- sl_mat_set_value_float
+- sl_mat_set_value_float2
+- sl_mat_set_value_float3
+- sl_mat_set_value_float4
+- sl_mat_get_value_uchar
+- sl_mat_get_value_uchar2
+- sl_mat_get_value_uchar3
+- sl_mat_get_value_uchar4
+- sl_mat_get_value_float
+- sl_mat_get_value_float2
+- sl_mat_get_value_float3
+- sl_mat_get_value_float4
+- sl_mat_set_to_uchar
+- sl_mat_set_to_uchar2
+- sl_mat_set_to_uchar3
+- sl_mat_set_to_uchar4
+- sl_mat_set_to_float
+- sl_mat_set_to_float2
+- sl_mat_set_to_float3
+- sl_mat_set_to_float4
 
 ### Retrieve
 - sl_retrieve_image

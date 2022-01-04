@@ -1,8 +1,84 @@
 export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
-	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_VIEW, SL_SENSING_MODE, 
+	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_VIEW, SL_SPATIAL_MAP_TYPE, 
+	SL_SPATIAL_MAPPING_STATE, SL_MESH_FILTER, SL_MESH_FILE_FORMAT, SL_SENSING_MODE, 
 	SL_DEPTH_MODE, SL_FLIP_MODE, SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
 
-export SL_InitParameters, SL_RuntimeParameters
+export SL_InitParameters, SL_RuntimeParameters, SL_PositionalTrackingParameters,
+	SL_SpatialMappingParameters 
+
+############################# MAT Types ###########################################################
+
+"""
+uchar2
+"""
+mutable struct SL_Uchar2
+    x::Cuchar
+    y::Cuchar
+end
+SL_Uchar2() = SL_Uchar2(Cuchar(0), Cuchar(0))
+
+"""
+uchar3
+"""
+mutable struct SL_Uchar3 
+    x::Cuchar
+    y::Cuchar
+    z::Cuchar
+end
+SL_Uchar3() = SL_Uchar3(Cuchar(0), Cuchar(0), Cuchar(0))
+
+"""
+uchar4
+"""
+mutable struct SL_Uchar4
+    x::Cuchar
+    y::Cuchar
+    z::Cuchar
+    w::Cuchar
+end
+SL_Uchar4() = SL_Uchar4(Cuchar(0), Cuchar(0), Cuchar(0), Cuchar(0))
+
+"""
+Vector2
+"""
+mutable struct SL_Vector2 
+    x::Cfloat
+    y::Cfloat
+end
+SL_Vector2() = SL_Vector2(Cfloat(0), Cfloat(0))
+
+"""
+Vector3
+"""
+mutable struct SL_Vector3 
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+end
+SL_Vector3() = SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0))
+
+"""
+Vector4
+"""
+mutable struct SL_Vector4
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+    w::Cfloat
+end
+SL_Vector4() = SL_Vector4(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))
+
+#############################  ###########################################################
+
+"""
+Quaternion.
+"""
+mutable struct SL_Quaternion
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+    w::Cfloat
+end
 
 @enum USB_DEVICE begin
 	USB_DEVICE_OCULUS
@@ -147,6 +223,45 @@ Lists available views.
 	SL_VIEW_NORMALS # Color rendering of the normals. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
 	SL_VIEW_DEPTH_RIGHT # Color rendering of the right depth mapped on right sensor. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
 	SL_VIEW_NORMALS_RIGHT # Color rendering of the normals mapped on right sensor. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
+end
+
+"""
+Gives the spatial mapping state.
+"""
+@enum SL_SPATIAL_MAPPING_STATE begin
+	SL_SPATIAL_MAPPING_STATE_INITIALIZING #The spatial mapping is initializing.
+	SL_SPATIAL_MAPPING_STATE_OK # The depth and tracking data were correctly integrated in the fusion algorithm.
+	SL_SPATIAL_MAPPING_STATE_NOT_ENOUGH_MEMORY # The maximum memory dedicated to the scanning has been reach, the mesh will no longer be updated.
+	SL_SPATIAL_MAPPING_STATE_NOT_ENABLED # Camera::enableSpatialMapping() wasn't called (or the scanning was stopped and not relaunched).
+	SL_SPATIAL_MAPPING_STATE_FPS_TOO_LOW # Effective FPS is too low to give proper results for spatial mapping. 
+										 # Consider using PERFORMANCES parameters (DEPTH_MODE_PERFORMANCE, low camera resolution (VGA,HD720), spatial mapping low resolution)
+end
+
+"""
+\brief Lists the types of spatial maps that can be created.
+"""
+@enum SL_SPATIAL_MAP_TYPE begin
+	SL_SPATIAL_MAP_TYPE_MESH # Represents a surface with faces, 3D points are linked by edges, no color information.
+	SL_SPATIAL_MAP_TYPE_FUSED_POINT_CLOUD # Geometry is represented by a set of 3D colored points.
+end
+
+"""
+\brief Lists available mesh filtering intensity.
+"""
+@enum SL_MESH_FILTER begin
+	SL_MESH_FILTER_LOW # Clean the mesh by closing small holes and removing isolated faces.
+	SL_MESH_FILTER_MEDIUM # Soft decimation and smoothing.
+	SL_MESH_FILTER_HIGH # Decimate the number of triangles and apply a soft smooth.
+end
+
+
+"""
+Lists available mesh file formats.
+"""
+@enum SL_MESH_FILE_FORMAT begin
+	SL_MESH_FILE_FORMAT_PLY # Contains only vertices and faces.
+	SL_MESH_FILE_FORMAT_PLY_BIN # Contains only vertices and faces, encoded in binary.
+	SL_MESH_FILE_FORMAT_OBJ # Contains vertices, normals, faces and textures informations if possible.
 end
 
 """
@@ -421,64 +536,109 @@ function SL_RuntimeParameters()
 						 Cint(100))
 end
 
-############################# MAT Types ###########################################################
+
 
 """
-uchar2
-"""
-mutable struct SL_Uchar2
-    x::Cuchar
-    y::Cuchar
-end
-SL_Uchar2() = SL_Uchar2(Cuchar(0), Cuchar(0))
+Parameters for positional tracking initialization.
 
+$(FIELDS)
 """
-uchar3
-"""
-mutable struct SL_Uchar3 
-    x::Cuchar
-    y::Cuchar
-    z::Cuchar
+mutable struct SL_PositionalTrackingParameters
+	"""
+	Rotation of the camera in the world frame when the camera is started. By default, it should be identity.
+	"""
+	initial_world_rotation::SL_Quaternion
+	"""
+	Position of the camera in the world frame when the camera is started. By default, it should be identity.
+	"""
+	initial_world_position::SL_Vector3
+	"""
+	This mode enables the camera to remember its surroundings. This helps correct positional tracking drift, and can be helpful for positioning
+	different cameras relative to one other in space.
+	default: true
+	warning: This mode requires more resources to run, but greatly improves tracking accuracy. We recommend leaving it on by default.
+	"""
+	enable_area_memory::Bool
+	"""
+	This mode enables smooth pose correction for small drift correction.
+	default: false
+	"""
+	enable_pose_smothing::Bool
+	"""
+	This mode initializes the tracking to be aligned with the floor plane to better position the camera in space.
+	default: false
+	note: This launches floor plane detection in the background until a suitable floor plane is found.
+	The tracking is in POSITIONAL_TRACKING_STATE_SEARCHING state.
+	warning: This features work best with the ZED-M since it needs an IMU to classify the floor.
+	The ZED needs to look at the floor during initialization for optimum results.
+	"""
+	set_floor_as_origin::Bool
+	"""
+	This setting allows you define the camera as static. If true, it will not move in the environment. This allows you to set its position using initial_world_transform.
+	All SDK functionalities requiring positional tracking will be enabled.
+	Camera::getPosition() will return the value set as initial_world_transform for the PATH, and identity as the POSE.
+	"""
+	set_as_static::Bool
+	"""
+	This setting allows you to enable or disable IMU fusion. When set to false, only the optical odometry will be used.
+	default: true
+	note: This setting has no impact on the tracking of a ZED camera; only the ZED Mini uses a built-in IMU.
+	"""
+	enable_imu_fusion::Bool
 end
-SL_Uchar3() = SL_Uchar3(Cuchar(0), Cuchar(0), Cuchar(0))
+function SL_PositionalTrackingParameters()
+	SL_PositionalTrackingParameters(SL_Quaternion(Cfloat(0),Cfloat(0),Cfloat(0),Cfloat(1)),
+									SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0)),
+									true,
+									false,
+									false,
+									false,
+									true)
+end
 
-"""
-uchar4
-"""
-mutable struct SL_Uchar4
-    x::Cuchar
-    y::Cuchar
-    z::Cuchar
-    w::Cuchar
+mutable struct SL_SpatialMappingParameters 
+	"""
+	Spatial mapping resolution in meters. Should fit \ref allowed_resolution (Default is 0.05f).
+	"""
+	resolution_meter::Cfloat
+	"""
+	Depth range in meters.
+	Can be different from the value set by \ref setDepthMaxRangeValue.
+	Set to 0 by default. In this case, the range is computed from resolution_meter
+	and from the current internal parameters to fit your application.
+	"""
+	range_meter::Cfloat
+	"""
+	Set to true if you want to be able to apply the texture to your mesh after its creation.
+	note This option will consume more memory.
+	note This option is only available for \ref SPATIAL_MAP_TYPE_MESH
+	"""
+	save_texture::Bool
+	"""
+	Set to false if you want to ensure consistency between the mesh and its inner chunk data (default is false).
+	note Updating the mesh is time-consuming. Setting this to true results in better performance.
+	"""
+	use_chunk_only::Bool
+	"""
+	The maximum CPU memory (in MB) allocated for the meshing process (default is 2048).
+	"""
+	max_memory_usage::Cint
+	"""
+	Specify if the order of the vertices of the triangles needs to be inverted. If your display process does not handle front and back face culling, you can use this to correct it.
+	note This option is only available for \ref SPATIAL_MAP_TYPE_MESH
+	"""
+	reverse_vertex_order::Bool
+	"""
+	The type of spatial map to be created. This dictates the format that will be used for the mapping(e.g. mesh, point cloud). See \ref SPATIAL_MAP_TYPE
+	"""
+	map_type::SL_SPATIAL_MAP_TYPE
 end
-SL_Uchar4() = SL_Uchar4(Cuchar(0), Cuchar(0), Cuchar(0), Cuchar(0))
-
-"""
-Vector2
-"""
-mutable struct SL_Vector2 
-    x::Cfloat
-    y::Cfloat
+function SL_SpatialMappingParameters()
+	SL_SpatialMappingParameters(Cfloat(0.05),
+								Cfloat(0),
+								false,
+								false,
+								Cint(2048),
+								false,
+								ZED.SL_SPATIAL_MAP_TYPE_MESH)
 end
-SL_Vector2() = SL_Vector2(Cfloat(0), Cfloat(0))
-
-"""
-Vector3
-"""
-mutable struct SL_Vector3 
-    x::Cfloat
-    y::Cfloat
-    z::Cfloat
-end
-SL_Vector3() = SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0))
-
-"""
-Vector4
-"""
-mutable struct SL_Vector4
-    x::Cfloat
-    y::Cfloat
-    z::Cfloat
-    w::Cfloat
-end
-SL_Vector4() = SL_Vector4(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))

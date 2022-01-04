@@ -1,8 +1,12 @@
 export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl_is_opened,
     sl_get_sdk_version, sl_get_camera_firmware, sl_grab, sl_enable_recording,
-    sl_disable_recording, sl_pause_recording, sl_get_svo_position, sl_set_svo_position
+    sl_disable_recording, sl_pause_recording, sl_enable_positional_tracking, 
+    sl_disable_positional_tracking, sl_get_svo_position, sl_set_svo_position
 
 export sl_get_width, sl_get_height, sl_get_current_timestamp, sl_get_svo_number_of_frames
+
+export sl_enable_spatial_mapping, sl_disable_spatial_mapping, sl_get_spatial_mapping_state,
+    sl_extract_whole_spatial_map, sl_save_mesh, sl_filter_mesh
 
 ############################# Utility Functions ###################################################
 
@@ -190,6 +194,39 @@ function sl_pause_recording(camera_id::T, status::Bool) where {T<:Integer}
 end
 
 """
+Initializes and starts the positional tracking processes.
+This function allows you to enable the position estimation of the SDK. It only has to be called once in the camera's lifetime.
+
+# Arguments
+- camera_id : id of the camera instance.
+- tracking_param : positional tracking parameters.
+- area_file_path : area localization file that describes the surroundings, saved from a previous tracking session.
+
+# Returns
+SL_ERROR_CODE::SUCCESS if everything went fine, ERROR_CODE::FAILURE otherwise.
+"""
+function sl_enable_positional_tracking(camera_id::T, 
+                                       tracking_param::SL_PositionalTrackingParameters, 
+                                       area_file_path::String) where {T<:Integer} 
+    err = ccall((:sl_enable_positional_tracking, zed), 
+                Cint, 
+                (Cint, Ref{SL_PositionalTrackingParameters}, Cstring), 
+                camera_id, tracking_param, area_file_path)
+    SL_ERROR_CODE(err)
+end
+
+"""
+Disables the positional tracking.
+
+# Arguments
+- camera_id : id of the camera instance.
+- area_file_path : if set, saves the spatial memory into an '.area' file.
+"""
+function sl_disable_positional_tracking(camera_id::T, area_file_path::String) where {T<:Integer} 
+    ccall((:sl_disable_positional_tracking, zed), Cvoid, (Cint, Cstring), camera_id, area_file_path)
+end
+
+"""
 Gets the current position of the SVO being recorded to.
 
 # Arguments
@@ -283,4 +320,131 @@ Sets a value in the ZED's camera settings.
 """
 function sl_set_camera_settings(camera_id::T, mode::SL_VIDEO_SETTINGS, value::T) where {T<:Integer}
 
+end
+
+############################# Spatial Mapping #####################################################
+
+
+"""
+Initializes and begins the spatial mapping processes.
+
+# Arguments
+- camera_id : id of the camera instance.
+- type : Spatial mapping type (see \ref SL_SPATIAL_MAP_TYPE).
+
+# Returns
+SUCCESS if everything went fine, ERROR_CODE::FAILURE otherwise.
+"""
+function sl_enable_spatial_mapping(camera_id::T, mapping_param::SL_SpatialMappingParameters) where {T<:Integer}
+    err = ccall((:sl_enable_spatial_mapping, zed),
+                Cint,
+                (Cint, Ref{SL_SpatialMappingParameters}),
+                camera_id, mapping_param)
+    SL_ERROR_CODE(err)
+end
+
+"""
+Disables the Spatial Mapping process.
+
+# Arguments
+- camera_id : id of the camera instance.
+"""
+function sl_disable_spatial_mapping(camera_id::T) where {T<:Integer}
+    ccall((:sl_disable_spatial_mapping, zed), Cvoid, (Cint,), camera_id)
+end
+
+"""
+Gets the current state of spatial mapping.
+
+# Arguments
+- camera_id : id of the camera instance.
+
+# Returns
+The current state (SL_SPATIAL_MAPPING_STATE) of the spatial mapping process
+"""
+function sl_get_spatial_mapping_state(camera_id::T) where {T<:Integer}
+    state = ccall((:sl_get_spatial_mapping_state, zed), 
+                  Cint, 
+                  (Cint,),
+                  camera_id)
+    SL_SPATIAL_MAPPING_STATE(state)
+end
+
+"""
+Extracts the current spatial map from the spatial mapping process.
+
+# Arguments
+- camera_id : id of the camera instance.
+
+# Returns 
+SUCCESS if the mesh is filled and available, otherwise FAILURE.
+"""
+function sl_extract_whole_spatial_map(camera_id::T) where {T<:Integer}
+    err = ccall((:sl_extract_whole_spatial_map, zed), 
+                Cint,
+                (Cint,),
+                camera_id)
+    SL_ERROR_CODE(err)
+end
+
+"""
+Saves the scanned mesh in a specific file format.
+# Arguments
+- camera_id : id of the camera instance.
+- filename : Path and filename of the mesh.
+- format : File format (extension). Can be .obj, .ply or .bin.
+
+# Returns
+True if the file was successfully saved, false otherwise.
+"""
+function sl_save_mesh(camera_id::T, filename::String, format::SL_MESH_FILE_FORMAT) where {T<:Integer}
+    ccall((:sl_save_mesh, zed), 
+          Bool,
+          (Cint, Cstring, Cuint),
+          camera_id, filename, format)
+end
+
+"""
+Filters a mesh to removes triangles while still preserving its overall shaper (though less accurate).
+
+# Arguments
+- camera_id : id of the camera instance.
+- filter_params : Filter level. Higher settings remore more triangles (SL_MeshFilterParameters::MESH_FILTER).
+- nb_ vertices : Array of the number of vertices in each submesh.
+- nb_triangles : Array of the number of triangles in each submesh.
+- nb_sub_meshes : Number of submeshes.
+- updated_indices : List of all submeshes updated since the last update.
+- nb_vertices_tot :  Total number of updated vertices in all submeshes.
+- nb_triangles_tot : Array of the number of triangles in each submesh.
+- max_submesh : Maximum number of submeshes that can be handled.
+
+# Returns
+True if the filtering was successful, false otherwise.
+"""
+function sl_filter_mesh(camera_id::T, 
+                        filter_params::SL_MESH_FILTER, 
+                        nb_vertices::T, 
+                        nb_triangles::T, 
+                        nb_updated_submeshes::T, 
+                        updated_indices::T, 
+                        nb_vertices_tot::T, 
+                        nb_triangles_tot::T, 
+                        max_submesh::T) where {T<:Integer}
+    nb_vertices1 = Libc.malloc(nb_vertices)
+    nb_triangles1 = Libc.malloc(nb_triangles)
+    nb_updated_submeshes1 = Libc.malloc(nb_updated_submeshes)
+    updated_indices1 = Libc.malloc(updated_indices)
+    nb_vertices_tot1 = Libc.malloc(nb_vertices_tot)
+    nb_triangles_tot1 = Libc.malloc(nb_triangles_tot)
+    state = ccall((:sl_filter_mesh, zed),
+                  Bool,
+                  (Cint, Cuint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Cint),
+                  camera_id, filter_params, nb_vertices1, nb_triangles1, nb_updated_submeshes1, updated_indices1, nb_vertices_tot1, nb_triangles_tot1, max_submesh)
+    Libc.free(nb_vertices1)
+    Libc.free(nb_triangles1)
+    Libc.free(nb_updated_submeshes1)
+    Libc.free(updated_indices1)
+    Libc.free(nb_vertices_tot1)
+    Libc.free(nb_triangles_tot1)
+    state
 end
