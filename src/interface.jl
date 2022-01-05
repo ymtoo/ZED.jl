@@ -6,7 +6,7 @@ export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl
 export sl_get_width, sl_get_height, sl_get_current_timestamp, sl_get_svo_number_of_frames
 
 export sl_enable_spatial_mapping, sl_disable_spatial_mapping, sl_get_spatial_mapping_state,
-    sl_extract_whole_spatial_map, sl_save_mesh, sl_filter_mesh
+    sl_extract_whole_spatial_map, sl_save_mesh, sl_apply_texture, sl_filter_mesh
 
 ############################# Utility Functions ###################################################
 
@@ -405,6 +405,38 @@ function sl_save_mesh(camera_id::T, filename::String, format::SL_MESH_FILE_FORMA
 end
 
 """
+Applies the scanned texture onto the internal scanned mesh.
+
+# Arguments
+- camera_id : id of the camera instance.
+- nb_vertices : Array of the number of vertices in each submesh.
+- nb_triangles : Array of the number of triangles in each submesh.
+- nb_sub_meshes : Number of submeshes.
+- updated_indices : List of all submeshes updated since the last update.
+- nb_vertices_tot :  Total number of updated vertices in all submeshes.
+- nb_triangles_tot : Array of the number of triangles in each submesh.
+- max_submesh : Maximum number of submeshes taht can be handled.
+- texture_size : Array containing the sizes of all the textures (width ,height) if applicable.
+
+# Returns
+True if the texturing was successful, false otherwise.
+"""
+function sl_apply_texture(camera_id::T, 
+                          nb_vertices::Ptr, 
+                          nb_triangles::Ptr, 
+                          nb_updated_submeshes::Ptr, 
+                          updated_indices::Ptr, 
+                          nb_vertices_tot::Ptr, 
+                          nb_triangles_tot::Ptr, 
+                          textures_size::Ptr, 
+                          max_submesh::T) where {T<:Integer}
+    ccall((:sl_apply_texture, zed), 
+          Bool,
+          (Cint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Cint),
+          camera_id, nb_vertices, nb_triangles, nb_updated_submeshes, updated_indices, nb_vertices_tot, nb_triangles_tot, textures_size, max_submesh)
+end
+
+"""
 Filters a mesh to removes triangles while still preserving its overall shaper (though less accurate).
 
 # Arguments
@@ -423,28 +455,28 @@ True if the filtering was successful, false otherwise.
 """
 function sl_filter_mesh(camera_id::T, 
                         filter_params::SL_MESH_FILTER, 
-                        nb_vertices::T, 
-                        nb_triangles::T, 
-                        nb_updated_submeshes::T, 
-                        updated_indices::T, 
-                        nb_vertices_tot::T, 
-                        nb_triangles_tot::T, 
+                        nb_vertices::Ptr, 
+                        nb_triangles::Ptr, 
+                        nb_updated_submeshes::Ptr, 
+                        updated_indices::Ptr, 
+                        nb_vertices_tot::Ptr, 
+                        nb_triangles_tot::Ptr, 
                         max_submesh::T) where {T<:Integer}
-    nb_vertices1 = Libc.malloc(nb_vertices)
-    nb_triangles1 = Libc.malloc(nb_triangles)
-    nb_updated_submeshes1 = Libc.malloc(nb_updated_submeshes)
-    updated_indices1 = Libc.malloc(updated_indices)
-    nb_vertices_tot1 = Libc.malloc(nb_vertices_tot)
-    nb_triangles_tot1 = Libc.malloc(nb_triangles_tot)
+    # nb_vertices1 = Libc.malloc(nb_vertices)
+    # nb_triangles1 = Libc.malloc(nb_triangles)
+    # nb_updated_submeshes1 = Libc.malloc(nb_updated_submeshes)
+    # updated_indices1 = Libc.malloc(updated_indices)
+    # nb_vertices_tot1 = Libc.malloc(nb_vertices_tot)
+    # nb_triangles_tot1 = Libc.malloc(nb_triangles_tot)
     state = ccall((:sl_filter_mesh, zed),
                   Bool,
                   (Cint, Cuint, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Cint),
-                  camera_id, filter_params, nb_vertices1, nb_triangles1, nb_updated_submeshes1, updated_indices1, nb_vertices_tot1, nb_triangles_tot1, max_submesh)
-    Libc.free(nb_vertices1)
-    Libc.free(nb_triangles1)
-    Libc.free(nb_updated_submeshes1)
-    Libc.free(updated_indices1)
-    Libc.free(nb_vertices_tot1)
-    Libc.free(nb_triangles_tot1)
+                  camera_id, filter_params, nb_vertices, nb_triangles, nb_updated_submeshes, updated_indices, nb_vertices_tot, nb_triangles_tot, max_submesh)
+    # Libc.free(nb_vertices1)
+    # Libc.free(nb_triangles1)
+    # Libc.free(nb_updated_submeshes1)
+    # Libc.free(updated_indices1)
+    # Libc.free(nb_vertices_tot1)
+    # Libc.free(nb_triangles_tot1)
     state
 end
