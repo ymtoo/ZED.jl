@@ -46,23 +46,24 @@ image_ptr = sl_mat_create_new(width,
                               ZED.SL_MEM_CPU)
 
 # Capture 50 frames and stop
-i = 0
-while (i < 50)
-    # Grab an image
-    state = sl_grab(camera_id, rt_param)
-    if state == SL_ERROR_CODE(0)
-	    # Get the left image
-        sl_retrieve_image(camera_id, 
-                          image_ptr, 
-                          ZED.SL_VIEW_LEFT, 
-                          ZED.SL_MEM_CPU, 
-                          width, 
-                          height)
-        w = sl_mat_get_width(image_ptr)
-        h = sl_mat_get_height(image_ptr)
-        timestamp = sl_get_current_timestamp(camera_id; indatetime=true)
-        println("Image resolution: $(h) x $(w) || $(timestamp)")
-        i += 1
+let i = 0
+    while (i < 50)
+        # Grab an image
+        state = sl_grab(camera_id, rt_param)
+        if state == SL_ERROR_CODE(0)
+    	    # Get the left image
+            sl_retrieve_image(camera_id, 
+                              image_ptr, 
+                              ZED.SL_VIEW_LEFT, 
+                              ZED.SL_MEM_CPU, 
+                              width, 
+                              height)
+            w = sl_mat_get_width(image_ptr)
+            h = sl_mat_get_height(image_ptr)
+            timestamp = sl_get_current_timestamp(camera_id; indatetime=true)
+            println("Image resolution: $(h) x $(w) || $(timestamp)")
+            i += 1
+        end
     end
 end
 
@@ -81,7 +82,7 @@ init_param = SL_InitParameters(camera_id)
 init_param.camera_fps = 30
 init_param.resolution = ZED.SL_RESOLUTION_HD1080
 init_param.input_type = ZED.SL_INPUT_TYPE_USB
-init_param.camera_device_id = camera_id
+#init_param.camera_device_id = camera_id
 init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
 init_param.camera_disable_self_calib = false
 init_param.enable_image_enhancement = true
@@ -108,6 +109,8 @@ tracking_param = SL_PositionalTrackingParameters()
 tracking_param.enable_area_memory = true
 tracking_param.enable_imu_fusion = true
 tracking_param.enable_pose_smothing = false
+tracking_param.initial_world_position = ZED.SL_Vector3(0, 0, 0)
+tracking_param.initial_world_rotation = ZED.SL_Quaternion(0, 0, 0, 1)
 tracking_param.set_as_static = false
 tracking_param.set_floor_as_origin = false
 
@@ -120,11 +123,12 @@ end
 mapping_param = SL_SpatialMappingParameters()
 mapping_param.map_type = ZED.SL_SPATIAL_MAP_TYPE_MESH;
 mapping_param.max_memory_usage = 2048
-mapping_param.range_meter = 0
-mapping_param.resolution_meter = 0.05
+mapping_param.range_meter = Cfloat(0)
+mapping_param.resolution_meter = Cfloat(0.05)
 mapping_param.save_texture = true
 mapping_param.use_chunk_only = true
 mapping_param.reverse_vertex_order = false
+
 state = sl_enable_spatial_mapping(camera_id, mapping_param)
 if state != SL_ERROR_CODE(0)
     println("Error Spatial Mapping $(state), exit program.")
@@ -141,13 +145,15 @@ rt_param.texture_confidence_threshold = 100
 width = sl_get_width(camera_id) 
 height = sl_get_height(camera_id) 
 
-i = 1
-while i ≤ 500
-    state = sl_grab(camera_id, rt_param) # Grab an image
-    if state == SL_ERROR_CODE(0)
-        map_state = sl_get_spatial_mapping_state(camera_id)
-        println("\r Images captured: $(i) / 500 || Spatial mapping state: $(map_state)")
-        i += 1
+let i = 1
+    while i ≤ 50
+        grab_state = sl_grab(camera_id, rt_param) # Grab an image
+        if grab_state == SL_ERROR_CODE(0)
+            map_state = sl_get_spatial_mapping_state(camera_id)
+            println("\r Images captured: $(i) / 50 \
+                    || Spatial mapping state: $(map_state)")
+            i += 1
+        end
     end
 end
 
@@ -156,19 +162,42 @@ end
 sl_extract_whole_spatial_map(camera_id)
 # Filter the mesh
 MAX_SUBMESH = 1000
+nb_vertices = Libc.malloc(MAX_SUBMESH)
+nb_triangles = Libc.malloc(MAX_SUBMESH)
+nb_updated_submeshes = Libc.malloc(0)
+updated_indices = Libc.malloc(MAX_SUBMESH)
+nb_vertices_tot = Libc.malloc(0)
+nb_triangles_tot = Libc.malloc(0)
 sl_filter_mesh(camera_id, 
                ZED.SL_MESH_FILTER_MEDIUM, 
-               MAX_SUBMESH, 
-               MAX_SUBMESH, 
-               0, 
-               MAX_SUBMESH, 
-               0, 
-               0, 
+               nb_vertices, 
+               nb_triangles, 
+               nb_updated_submeshes, 
+               updated_indices, 
+               nb_vertices_tot, 
+               nb_triangles_tot, 
                MAX_SUBMESH)
+textures_size = Libc.malloc(0)
+sl_apply_texture(camera_id,
+                nb_vertices, 
+                nb_triangles, 
+                nb_updated_submeshes, 
+                updated_indices, 
+                nb_vertices_tot, 
+                nb_triangles_tot,
+                textures_size,
+                MAX_SUBMESH)
 # Save the mesh
 @info "Saving Mesh ..."
 sl_save_mesh(camera_id, "mesh.obj", ZED.SL_MESH_FILE_FORMAT_OBJ)
 
+Libc.free(nb_vertices)
+Libc.free(nb_triangles)
+Libc.free(nb_updated_submeshes)
+Libc.free(updated_indices)
+Libc.free(nb_vertices_tot)
+Libc.free(nb_triangles_tot)
+Libc.free(textures_size)
 sl_disable_spatial_mapping(camera_id)
 sl_disable_positional_tracking(camera_id, "")
 sl_close_camera(camera_id)
@@ -255,31 +284,32 @@ image_ptr = sl_mat_create_new(width,
                               ZED.SL_MEM_CPU)
 
 frames = zeros(Cuchar, height, width, 4, numframes)
-i = 0
-while (i < numframes)
-    # Grab an image
-    state = sl_grab(camera_id, rt_param)
-    println(state)
-    if state == SL_ERROR_CODE(0)
-	    # Get the left image
-        sl_retrieve_image(camera_id, 
-                          image_ptr, 
-                          ZED.SL_VIEW_LEFT, 
-                          ZED.SL_MEM_CPU, 
-                          width, 
-                          height)
+let i = 0
+    while (i < numframes)
+        # Grab an image
+        state = sl_grab(camera_id, rt_param)
+        println(state)
+        if state == SL_ERROR_CODE(0)
+    	    # Get the left image
+            sl_retrieve_image(camera_id, 
+                              image_ptr, 
+                              ZED.SL_VIEW_LEFT, 
+                              ZED.SL_MEM_CPU, 
+                              width, 
+                              height)
 
-        svo_position = sl_get_svo_position(camera_id)
-        frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
-        
-        println("Get frame #$(svo_position).")
-        i += 1
-    elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
-        sl_set_svo_position(camera_id, 0)
-        break
-    else
-        println("Grab ZED : $(state)");
-        break
+            svo_position = sl_get_svo_position(camera_id)
+            frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+            
+            println("Get frame #$(svo_position).")
+            i += 1
+        elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
+            sl_set_svo_position(camera_id, 0)
+            break
+        else
+            println("Grab ZED : $(state)");
+            break
+        end
     end
 end
 sl_close_camera(camera_id)
