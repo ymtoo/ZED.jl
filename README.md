@@ -300,7 +300,8 @@ let i = 0
                               height)
 
             svo_position = sl_get_svo_position(camera_id)
-            frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+            frames[:,:,:,svo_position] = getframes(image_ptr,
+                                                   ZED.SL_MAT_TYPE_U8_C4)
             
             println("Get frame #$(svo_position).")
             i += 1
