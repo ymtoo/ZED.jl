@@ -162,12 +162,13 @@ end
 sl_extract_whole_spatial_map(camera_id)
 # Filter the mesh
 MAX_SUBMESH = 1000
-nb_vertices = Libc.malloc(MAX_SUBMESH)
-nb_triangles = Libc.malloc(MAX_SUBMESH)
-nb_updated_submeshes = Libc.malloc(0)
-updated_indices = Libc.malloc(MAX_SUBMESH)
-nb_vertices_tot = Libc.malloc(0)
-nb_triangles_tot = Libc.malloc(0)
+s = sizeof(zeros(Cint, MAX_SUBMESH))
+nb_vertices = Libc.malloc(s)
+nb_triangles = Libc.malloc(s)
+nb_updated_submeshes = Libc.malloc(1)
+updated_indices = Libc.malloc(s)
+nb_vertices_tot = Libc.malloc(1)
+nb_triangles_tot = Libc.malloc(1)
 sl_filter_mesh(camera_id, 
                ZED.SL_MESH_FILTER_MEDIUM, 
                nb_vertices, 
@@ -177,16 +178,16 @@ sl_filter_mesh(camera_id,
                nb_vertices_tot, 
                nb_triangles_tot, 
                MAX_SUBMESH)
-textures_size = Libc.malloc(0)
+textures_size = Libc.malloc(1)
 sl_apply_texture(camera_id,
-                nb_vertices, 
-                nb_triangles, 
-                nb_updated_submeshes, 
-                updated_indices, 
-                nb_vertices_tot, 
-                nb_triangles_tot,
-                textures_size,
-                MAX_SUBMESH)
+                 nb_vertices, 
+                 nb_triangles, 
+                 nb_updated_submeshes, 
+                 updated_indices, 
+                 nb_vertices_tot, 
+                 nb_triangles_tot,
+                 textures_size,
+                 MAX_SUBMESH)
 # Save the mesh
 @info "Saving Mesh ..."
 sl_save_mesh(camera_id, "mesh.obj", ZED.SL_MESH_FILE_FORMAT_OBJ)
