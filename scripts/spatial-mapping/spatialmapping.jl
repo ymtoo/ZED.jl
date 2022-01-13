@@ -36,7 +36,7 @@ init_param.sensors_required = false
 init_param.enable_right_side_measure = false
 
 # open the camera
-path_svo = "/home/ymtoo/Projects/ZED/data/fire-hydrant.svo" #length(ARGS) < 1 ? "" : ARGS[1]
+path_svo = length(ARGS) < 1 ? "" : ARGS[1]
 println("$(pwd())")
 println("Path SVO: $(path_svo)")
 state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
