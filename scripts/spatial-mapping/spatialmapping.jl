@@ -6,7 +6,6 @@ Arguments
 - path to save the obj file, default is the current directory
 """
 
-
 using Pkg
 Pkg.activate(".")
 
@@ -17,28 +16,27 @@ camera_id = 0
 sl_create_camera(camera_id)
 
 init_param = SL_InitParameters(camera_id)
-# init_param.camera_fps = 30
-# init_param.resolution = ZED.SL_RESOLUTION_HD1080
-init_param.input_type = isempty(ARGS) ? ZED.SL_INPUT_TYPE_USB : ZED.SL_INPUT_TYPE_SVO
-init_param.svo_real_time_mode = isempty(ARGS) ? true : false
-# init_param.camera_device_id = camera_id
-# init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
-# init_param.camera_disable_self_calib = false
-# init_param.enable_image_enhancement = true
-# init_param.svo_real_time_mode = true
-# init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
-# init_param.depth_stabilization = true
-# init_param.depth_maximum_distance = 40
-# init_param.depth_minimum_distance = -1
-# init_param.coordinate_unit = ZED.SL_UNIT_METER
-# init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP
-# init_param.sdk_gpu_id = -1
-# init_param.sdk_verbose = false
-# init_param.sensors_required = false
-# init_param.enable_right_side_measure = false
+init_param.camera_fps = 0
+init_param.resolution = ZED.SL_RESOLUTION_HD720
+init_param.input_type = length(ARGS) < 1 ? ZED.SL_INPUT_TYPE_USB : ZED.SL_INPUT_TYPE_SVO 
+init_param.svo_real_time_mode = length(ARGS) < 2 ? true : false
+#init_param.camera_device_id = camera_id
+init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
+init_param.camera_disable_self_calib = false
+init_param.enable_image_enhancement = true
+init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
+init_param.depth_stabilization = true
+init_param.depth_maximum_distance = 40
+init_param.depth_minimum_distance = -1
+init_param.coordinate_unit = ZED.SL_UNIT_METER
+init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP
+init_param.sdk_gpu_id = -1
+init_param.sdk_verbose = false
+init_param.sensors_required = false
+init_param.enable_right_side_measure = false
 
 # open the camera
-path_svo = isempty(ARGS) ? "" : ARGS[1]
+path_svo = "/home/ymtoo/Projects/ZED/data/fire-hydrant.svo" #length(ARGS) < 1 ? "" : ARGS[1]
 println("$(pwd())")
 println("Path SVO: $(path_svo)")
 state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
@@ -87,12 +85,7 @@ rt_param.texture_confidence_threshold = 100
 width = sl_get_width(camera_id) 
 height = sl_get_height(camera_id)
 
-numframes = if isempty(ARGS)
-                50 # by default, 50 frames
-            else
-                sl_get_svo_number_of_frames(camera_id)
-            end
-
+numframes = length(ARGS) < 1 ? 50 : sl_get_svo_number_of_frames(camera_id)
 let i = 1
     while i ≤ numframes
         grab_state = sl_grab(camera_id, rt_param) # Grab an image
@@ -105,11 +98,12 @@ let i = 1
             sl_set_svo_position(camera_id, 0)
             break
         else
-            println("Grab ZED : $(state)");
-            break
+            println("Grab ZED : $(grab_state)");
+            continue
         end
     end
 end
+
 
 @info "Extracting Mesh..."
 # Extract the whole mesh.

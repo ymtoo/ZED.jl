@@ -471,8 +471,8 @@ mutable struct SL_InitParameters
 end
 function SL_InitParameters(camera_id::T) where {T<:Integer}
 	SL_InitParameters(SL_INPUT_TYPE_USB,
-					  SL_RESOLUTION_HD1080,
-					  Cint(30),
+					  SL_RESOLUTION_HD720,
+					  Cint(0),
 					  Cint(camera_id),
 					  SL_FLIP_MODE_AUTO,
 					  false,
