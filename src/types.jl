@@ -1,5 +1,5 @@
 export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
-	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_VIEW, SL_SPATIAL_MAP_TYPE, 
+	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_MEASURE, SL_VIEW, SL_SPATIAL_MAP_TYPE, 
 	SL_SPATIAL_MAPPING_STATE, SL_MESH_FILTER, SL_MESH_FILE_FORMAT, SL_SENSING_MODE, 
 	SL_DEPTH_MODE, SL_FLIP_MODE, SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
 
@@ -203,6 +203,31 @@ Warning: GAIN and EXPOSURE are linked in auto/default mode (see `SL_Camera::setC
 	SL_VIDEO_SETTINGS_WHITEBALANCE_AUTO # Defines if the White balance is in automatic mode or not
 	SL_VIDEO_SETTINGS_LED_STATUS # Defines the status of the camera front LED. Set to 0 to disable the light, 1 to enable the light. Default value is on. Requires Camera FW 1523 at least.
 	SL_VIDEO_SETTINGS_LAST
+end
+
+"""
+Lists retrievable measures.
+"""
+@enum SL_MEASURE begin
+	SL_MEASURE_DISPARITY # Disparity map. Each pixel contains 1 float. SL_MAT_TYPE_F32_C1.*/
+	SL_MEASURE_DEPTH # Depth map. In SL_UNIT defined in SL_InitParameters. Each pixel contains 1 float. SL_MAT_TYPE_F32_C1.*/
+	SL_MEASURE_CONFIDENCE # Certainty/confidence of the depth map. Each pixel contains 1 float. SL_MAT_TYPE_F32_C1.*/
+	SL_MEASURE_XYZ # Point cloud. Each pixel contains 4 float (X, Y, Z, not used). SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZRGBA # Colored point cloud. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the RGBA color.  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZBGRA # Colored point cloud. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the BGRA color.  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZARGB # Colored point cloud. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the ARGB color.  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZABGR # Colored point cloud. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the ABGR color.  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_NORMALS # Normals vector. Each pixel contains 4 float (X, Y, Z, 0).  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_DISPARITY_RIGHT # Disparity map for right sensor. Each pixel contains 1 float. SL_MAT_TYPE_F32_C1.*/
+	SL_MEASURE_DEPTH_RIGHT # Depth map for right sensor. Each pixel contains 1 float. SL_MAT_TYPE_F32_C1.*/
+	SL_MEASURE_XYZ_RIGHT # Point cloud for right sensor. Each pixel contains 4 float (X, Y, Z, not used). SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZRGBA_RIGHT # Colored point cloud for right sensor. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the RGBA color. SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZBGRA_RIGHT # Colored point cloud for right sensor. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the BGRA color. SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZARGB_RIGHT # Colored point cloud for right sensor. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the ARGB color. SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_XYZABGR_RIGHT # Colored point cloud for right sensor. Each pixel contains 4 float (X, Y, Z, color). The color need to be read as an usigned char[4] representing the ABGR color. SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_NORMALS_RIGHT # Normals vector for right view. Each pixel contains 4 float (X, Y, Z, 0).  SL_MAT_TYPE_F32_C4.*/
+	SL_MEASURE_DEPTH_U16_MM # Depth map in millimeter whatever the SL_UNIT defined in SL_InitParameters. Invalid values are set to 0, depth values are clamped at 65000.  Each pixel  contains 1 unsigned short. SL_MAT_TYPE_U16_C1.*/
+	SL_MEASURE_DEPTH_U16_MM_RIGHT # Depth map in millimeter for right sensor. Each pixel  contains 1 unsigned short. SL_MAT_TYPE_U16_C1.*/
 end
 
 """

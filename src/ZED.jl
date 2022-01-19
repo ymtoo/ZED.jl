@@ -2,6 +2,7 @@ module ZED
 
 using Dates
 using DocStringExtensions
+using Images
 
 include("utils.jl")
 include("types.jl")
