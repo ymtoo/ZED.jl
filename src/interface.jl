@@ -3,7 +3,10 @@ export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl
     sl_disable_recording, sl_pause_recording, sl_enable_positional_tracking, 
     sl_disable_positional_tracking, sl_get_svo_position, sl_set_svo_position
 
-export sl_get_width, sl_get_height, sl_get_current_timestamp, sl_get_svo_number_of_frames
+export sl_get_width, sl_get_height, sl_get_sensors_configuration, sl_get_current_timestamp, 
+    sl_get_svo_number_of_frames
+
+export sl_get_position_data!, sl_get_position!
 
 export sl_enable_spatial_mapping, sl_disable_spatial_mapping, sl_get_spatial_mapping_state,
     sl_extract_whole_spatial_map, sl_save_mesh, sl_apply_texture, sl_filter_mesh
@@ -282,6 +285,23 @@ function sl_get_height(camera_id::T) where {T<:Integer}
 end
 
 """
+Gets the Sensors configuration.
+
+# Arguments
+- camera_id : id of the camera instance.
+
+# Returns
+Structure containing information about all the sensors available in the current device.
+"""
+function sl_get_sensors_configuration(camera_id::T) where {T<:Integer}
+    ptr_config = ccall((:sl_get_sensors_configuration, zed), 
+                   Ptr{SL_SensorsConfiguration}, 
+                   (Cint,), 
+                   camera_id)
+    unsafe_load(ptr_config)
+end
+
+"""
 Get the Timestamp at the time the frame has been extracted from USB stream. (should be called after a grab).
 
 # Arguments
@@ -320,6 +340,47 @@ Sets a value in the ZED's camera settings.
 """
 function sl_set_camera_settings(camera_id::T, mode::SL_VIDEO_SETTINGS, value::T) where {T<:Integer}
 
+end
+
+############################# Motion Tracking #####################################################
+
+"""
+Gets the current position of the camera and state of the tracking, filling a PoseData struck useful for AR pass-though.
+
+# Arguments
+- camera_id : id of the camera instance.
+- poseData : Current Pose.
+- reference_frame : Reference frame sor setting the rotation/position.
+
+# Returns
+The current state of the tracking process (see \ref SL_POSITIONAL_TRACKING_STATE).
+"""
+function sl_get_position_data!(camera_id::T, pose_data_ref::Ref{SL_PoseData}, reference_frame::SL_REFERENCE_FRAME) where {T<:Integer}
+    state = ccall((:sl_get_position_data, zed), 
+                  Cint, 
+                  (Cint, Ref{SL_PoseData}, Cuint),
+                  camera_id, pose_data_ref, reference_frame)
+    SL_POSITIONAL_TRACKING_STATE(state)
+end
+
+"""
+Retrieves the estimated position and orientation of the camera in the specified \ref REFERENCE_FRAME "reference frame".
+
+# Arguments
+- camera_id : id of the camera instance.
+- rotation : Quaternion filled with the current rotation of the camera depending on its reference frame.
+- position : Vector filled with the current position of the camera depending on its reference frame.
+- reference_frame : Reference frame for setting the rotation/position.
+
+# Returns
+The current state of the tracking process (see \ref SL_POSITIONAL_TRACKING_STATE).
+"""
+function sl_get_position!(camera_id::T, rotation::Ref{SL_Quaternion}, position::Ref{SL_Vector3}, reference_frame::SL_REFERENCE_FRAME) where {T<:Integer}
+    state = ccall((:sl_get_position, zed), 
+                  Cint, 
+                  (Cint, Ref{SL_Quaternion}, Ref{SL_Vector3}, Cuint),
+                  camera_id, rotation, position, reference_frame)
+    SL_POSITIONAL_TRACKING_STATE(state)
 end
 
 ############################# Spatial Mapping #####################################################

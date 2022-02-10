@@ -1,9 +1,8 @@
 """ 
-Tutorial 5
+Tutorial 4
 
 Arguments
 - path to the SVO file, default is ""
-- path to save the obj file, default is the current directory
 """
 
 using Pkg
@@ -53,23 +52,6 @@ tracking_param.set_as_static = false
 tracking_param.set_floor_as_origin = false
 
 state = sl_enable_positional_tracking(camera_id, tracking_param, "")
-if state != SL_ERROR_CODE(0)
-    error("Error Enable Tracking $(state), exit program.")
-end
-
-mapping_param = SL_SpatialMappingParameters()
-mapping_param.map_type = ZED.SL_SPATIAL_MAP_TYPE_MESH;
-mapping_param.max_memory_usage = 2048
-mapping_param.range_meter = Cfloat(0)
-mapping_param.resolution_meter = Cfloat(0.05)
-mapping_param.save_texture = true
-mapping_param.use_chunk_only = true
-mapping_param.reverse_vertex_order = false
-
-state = sl_enable_spatial_mapping(camera_id, mapping_param)
-if state != SL_ERROR_CODE(0)
-    error("Error Spatial Mapping $(state), exit program.")
-end
 
 rt_param = SL_RuntimeParameters()
 rt_param.enable_depth = true
@@ -81,14 +63,25 @@ rt_param.texture_confidence_threshold = 100
 width = sl_get_width(camera_id) 
 height = sl_get_height(camera_id)
 
+sensor_config = sl_get_sensors_configuration(camera_id)
+zed_has_imu = sensor_config.gyroscope_parameters.is_available
+
+image_ptr = sl_mat_create_new(width, 
+                              height, 
+                              ZED.SL_MAT_TYPE_U8_C4, 
+                              ZED.SL_MEM_CPU)
+
 numframes = length(ARGS) < 1 ? 50 : sl_get_svo_number_of_frames(camera_id)
 let i = 1
     while i ≤ numframes
         grab_state = sl_grab(camera_id, rt_param) # Grab an image
         if grab_state == SL_ERROR_CODE(0)
-            map_state = sl_get_spatial_mapping_state(camera_id)
-            println("\r Images captured: $(i) / $(numframes) \
-                    || Spatial mapping state: $(map_state)")
+            pose = Ref(SL_PoseData())
+            sl_get_position_data!(camera_id, pose, ZED.SL_REFERENCE_FRAME_WORLD)
+            println("Frame: $(i) / $(numframes), \
+                    Camera Translation: $(pose[].translation.x), $(pose[].translation.y), $(pose[].translation.z), \
+                    Orientation: $(pose[].rotation.x), $(pose[].rotation.y), $(pose[].rotation.z),  $(pose[].rotation.w), \
+                    Timestamp: $(pose[].timestamp)")
             i += 1
         elseif grab_state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
             sl_set_svo_position(camera_id, 0)
@@ -100,50 +93,5 @@ let i = 1
     end
 end
 
-
-@info "Extracting Mesh..."
-# Extract the whole mesh.
-sl_extract_whole_spatial_map(camera_id)
-# Filter the mesh
-MAX_SUBMESH = 1000
-s = sizeof(zeros(Cint, MAX_SUBMESH))
-nb_vertices = Libc.malloc(s)
-nb_triangles = Libc.malloc(s)
-nb_updated_submeshes = Libc.malloc(1)
-updated_indices = Libc.malloc(s)
-nb_vertices_tot = Libc.malloc(1)
-nb_triangles_tot = Libc.malloc(1)
-sl_filter_mesh(camera_id, 
-               ZED.SL_MESH_FILTER_MEDIUM, 
-               nb_vertices, 
-               nb_triangles, 
-               nb_updated_submeshes, 
-               updated_indices, 
-               nb_vertices_tot, 
-               nb_triangles_tot, 
-               MAX_SUBMESH)
-textures_size = Libc.malloc(1)
-sl_apply_texture(camera_id,
-                 nb_vertices, 
-                 nb_triangles, 
-                 nb_updated_submeshes, 
-                 updated_indices, 
-                 nb_vertices_tot, 
-                 nb_triangles_tot,
-                 textures_size,
-                 MAX_SUBMESH)
-# Save the mesh
-path_obj = joinpath(length(ARGS) < 2 ? "./" : ARGS[2], "mesh.obj")
-@info "Saving Mesh to $(path_obj)..."
-sl_save_mesh(camera_id, path_obj, ZED.SL_MESH_FILE_FORMAT_OBJ)
-
-Libc.free(nb_vertices)
-Libc.free(nb_triangles)
-Libc.free(nb_updated_submeshes)
-Libc.free(updated_indices)
-Libc.free(nb_vertices_tot)
-Libc.free(nb_triangles_tot)
-Libc.free(textures_size)
-sl_disable_spatial_mapping(camera_id)
 sl_disable_positional_tracking(camera_id, "")
 sl_close_camera(camera_id)

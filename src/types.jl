@@ -1,10 +1,13 @@
-export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
-	SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, SL_MEASURE, SL_VIEW, SL_SPATIAL_MAP_TYPE, 
-	SL_SPATIAL_MAPPING_STATE, SL_MESH_FILTER, SL_MESH_FILE_FORMAT, SL_SENSING_MODE, 
-	SL_DEPTH_MODE, SL_FLIP_MODE, SL_SVO_COMPRESSION_MODE, SL_MAT_TYPE
+export SL_PoseData
 
-export SL_InitParameters, SL_RuntimeParameters, SL_PositionalTrackingParameters,
-	SL_SpatialMappingParameters 
+export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
+	SL_SENSOR_TYPE, SL_SENSORS_UNIT, SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, 
+	SL_MEASURE, SL_VIEW, SL_SPATIAL_MAP_TYPE, SL_SPATIAL_MAPPING_STATE, SL_MESH_FILTER, 
+	SL_MESH_FILE_FORMAT, SL_SENSING_MODE, SL_DEPTH_MODE, SL_FLIP_MODE, SL_SVO_COMPRESSION_MODE, 
+	SL_MAT_TYPE
+
+export SL_InitParameters, SL_RuntimeParameters, SL_SensorParameters, SL_SensorsConfiguration, 
+	SL_PositionalTrackingParameters, SL_SpatialMappingParameters
 
 ############################# MAT Types ###########################################################
 
@@ -46,6 +49,11 @@ mutable struct SL_Vector2
     y::Cfloat
 end
 SL_Vector2() = SL_Vector2(Cfloat(0), Cfloat(0))
+struct SL_Vector2_IM 
+    x::Cfloat
+    y::Cfloat
+end
+SL_Vector2_IM() = SL_Vector2_IM(Cfloat(0), Cfloat(0))
 
 """
 Vector3
@@ -56,6 +64,12 @@ mutable struct SL_Vector3
     z::Cfloat
 end
 SL_Vector3() = SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0))
+struct SL_Vector3_IM 
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+end
+SL_Vector3_IM() = SL_Vector3_IM(Cfloat(0), Cfloat(0), Cfloat(0))
 
 """
 Vector4
@@ -67,6 +81,14 @@ mutable struct SL_Vector4
     w::Cfloat
 end
 SL_Vector4() = SL_Vector4(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))
+struct SL_Vector4_IM 
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+	w::Cfloat
+end
+SL_Vector4_IM() = SL_Vector4_IM(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))
+
 
 #############################  ###########################################################
 
@@ -79,6 +101,21 @@ mutable struct SL_Quaternion
     z::Cfloat
     w::Cfloat
 end
+struct SL_Quaternion_IM
+    x::Cfloat
+    y::Cfloat
+    z::Cfloat
+    w::Cfloat
+end
+
+mutable struct SL_PoseData
+    valid::Bool # what is valid?
+    timestamp::Culonglong
+    rotation::SL_Quaternion_IM 
+    translation::SL_Vector3_IM
+    pose_confidence::Cint
+end
+SL_PoseData() = SL_PoseData(true, 1, SL_Quaternion_IM(0,0,0,0), SL_Vector3_IM(0,0,0), 0)
 
 @enum USB_DEVICE begin
 	USB_DEVICE_OCULUS
@@ -169,6 +206,28 @@ List available memory type
 	SL_MEM_GPU  # GPU Memory (Graphic card side).
 end
 
+"""
+List of the available onboard sensors
+"""
+@enum SL_SENSOR_TYPE begin
+	SL_SENSOR_TYPE_ACCELEROMETER # Three axis Accelerometer sensor to measure the inertial accelerations. 
+	SL_SENSOR_TYPE_GYROSCOPE # Three axis Gyroscope sensor to measure the angular velocitiers. 
+	SL_SENSOR_TYPE_MAGNETOMETER # Three axis Magnetometer sensor to measure the orientation of the device respect to the earth magnetic field. 
+	SL_SENSOR_TYPE_BAROMETER # Barometer sensor to measure the atmospheric pressure. 
+end
+
+"""
+List of the available onboard sensors measurement units
+"""
+@enum SL_SENSORS_UNIT begin
+	SL_SENSORS_UNIT_M_SEC_2 # Acceleration [m/s²].
+	SL_SENSORS_UNIT_DEG_SEC # Angular velocity [deg/s]. 
+	SL_SENSORS_UNIT_U_T # MAgnetic Fiels [uT]. 
+	SL_SENSORS_UNIT_HPA # Atmospheric pressure [hPa].
+	SL_SENSORS_UNIT_CELSIUS # Temperature [°C].
+	SL_SENSORS_UNIT_HERTZ # Frequency [Hz].
+end
+
 @enum SL_INPUT_TYPE begin
 	SL_INPUT_TYPE_USB
 	SL_INPUT_TYPE_SVO
@@ -248,6 +307,16 @@ Lists available views.
 	SL_VIEW_NORMALS # Color rendering of the normals. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
 	SL_VIEW_DEPTH_RIGHT # Color rendering of the right depth mapped on right sensor. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
 	SL_VIEW_NORMALS_RIGHT # Color rendering of the normals mapped on right sensor. Each pixel contains 4 usigned char (B,G,R,A). SL_MAT_TYPE_U8_C4. 
+end
+
+"""
+Lists the different states of positional tracking.
+"""
+@enum SL_POSITIONAL_TRACKING_STATE begin
+	SL_POSITIONAL_TRACKING_STATE_SEARCHING # The camera is searching for a previously known position to locate itself.
+	SL_POSITIONAL_TRACKING_STATE_OK # Positional tracking is working normally.
+	SL_POSITIONAL_TRACKING_STATE_OFF # Positional tracking is not enabled.
+	SL_POSITIONAL_TRACKING_STATE_FPS_TOO_LOW # Effective FPS is too low to give proper results for motion tracking. Consider using PERFORMANCES parameters (DEPTH_MODE_PERFORMANCE, low camera resolution (VGA,HD720))
 end
 
 """
@@ -561,7 +630,63 @@ function SL_RuntimeParameters()
 						 Cint(100))
 end
 
+"""
+Structure containing information about a single sensor available in the current device
 
+This object is meant to be used as a read - only container, editing any of its fields won't impact the SDK.
+"""
+struct SL_SensorParameters 
+	type::SL_SENSOR_TYPE # The type of the sensor as \ref DEVICE_SENSORS (SL_SENSOR_TYPE)
+	resolution::Cfloat #The resolution of the sensor. 
+	sampling_rate::Cfloat # The sampling rate (or ODR) of the sensor. 
+	range::SL_Vector2_IM # The range values of the sensor. MIN: "range.x", MAX: "range.y" 
+	noise_density::Cfloat # also known as white noise, given as continous (frequency independant). Units will be expressed in sensor_unit/squared_root(Hz). "NAN" if the information is not available 
+	random_walk::Cfloat # derived from the Allan Variance, given as continous (frequency independant). Units will be expressed in sensor_unit/s/squared_root(Hz)."NAN" if the information is not available 
+	sensor_unit::SL_SENSORS_UNIT # The string relative to the measurement unit of the sensor (SL_SENSORS_UNIT). 
+	is_available::Bool
+end
+
+"""
+Structure containing information about all the sensors available in the current device.
+"""
+struct SL_SensorsConfiguration
+	"""
+	The firmware version of the sensor module, 0 if no sensors are available (ZED camera model).
+	"""
+	firmware_version::Cuint
+	"""
+	IMU to Left camera rotation (quaternion).
+	"""
+	camera_ium_rotation::SL_Vector4_IM
+	"""
+	IMU to Left camera translation (SL_float3).
+	"""
+	camera_imu_translation::SL_Vector3_IM
+	"""
+	Magnetometer to IMU rotation. That contains rotation between IMU frame and magnetometer frame.
+	"""
+	ium_magnetometer_rotation::SL_Vector4_IM
+	"""
+	Magnetometer to IMU translation. That contains translation between IMU frame and magnetometer frame.
+	"""
+	ium_magnetometer_translation::SL_Vector3_IM
+	"""
+	Configuration of the accelerometer device
+	"""
+	accelerometer_parameters::SL_SensorParameters
+	"""
+	Configuration of the gyroscope device
+	"""
+	gyroscope_parameters::SL_SensorParameters
+	"""
+	Configuration of the magnetometer device
+	"""
+	magnetometer_parameters::SL_SensorParameters
+	"""
+	Configuration of the barometer device
+	"""
+	barometer_parameters::SL_SensorParameters
+end
 
 """
 Parameters for positional tracking initialization.
