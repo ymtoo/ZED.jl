@@ -52,6 +52,9 @@ tracking_param.set_as_static = false
 tracking_param.set_floor_as_origin = false
 
 state = sl_enable_positional_tracking(camera_id, tracking_param, "")
+if state != SL_ERROR_CODE(0)
+    error("Error Enable Tracking $(state), exit program.")
+end
 
 rt_param = SL_RuntimeParameters()
 rt_param.enable_depth = true
@@ -82,6 +85,22 @@ let i = 1
                     Camera Translation: $(pose[].translation.x), $(pose[].translation.y), $(pose[].translation.z), \
                     Orientation: $(pose[].rotation.x), $(pose[].rotation.y), $(pose[].rotation.z),  $(pose[].rotation.w), \
                     Timestamp: $(pose[].timestamp)")
+
+            if zed_has_imu
+                sensor_data = Ref(SL_SensorData())
+                sl_get_sensors_data!(camera_id, sensor_data, ZED.SL_TIME_REFERENCE_IMAGE)
+
+                imu_orientation_x = sensor_data[].imu.orientation.x
+                imu_orientation_y = sensor_data[].imu.orientation.y
+                imu_orientation_z = sensor_data[].imu.orientation.z
+                imu_orientation_w = sensor_data[].imu.orientation.w
+                acceleration_x = sensor_data[].imu.linear_acceleration.x
+                acceleration_y = sensor_data[].imu.linear_acceleration.y
+                acceleration_z = sensor_data[].imu.linear_acceleration.z
+                println("IMU Orientation: $(imu_orientation_x), $(imu_orientation_y), $(imu_orientation_z), $(imu_orientation_w), 
+                        Acceleration: $(acceleration_x), $(acceleration_y), $(acceleration_z)")
+            end
+
             i += 1
         elseif grab_state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
             sl_set_svo_position(camera_id, 0)

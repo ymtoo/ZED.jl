@@ -1,4 +1,4 @@
-export SL_PoseData
+export SL_PoseData, SL_SensorData 
 
 export USB_DEVICE, SL_ERROR_CODE, SL_RESOLUTION, SL_UNIT, SL_COORDINATE_SYSTEM, SL_MEM, 
 	SL_SENSOR_TYPE, SL_SENSORS_UNIT, SL_INPUT_TYPE, SL_REFERENCE_FRAME, SL_VIDEO_SETTINGS, 
@@ -89,8 +89,12 @@ struct SL_Vector4_IM
 end
 SL_Vector4_IM() = SL_Vector4_IM(Cfloat(0), Cfloat(0), Cfloat(0), Cfloat(0))
 
-
-#############################  ###########################################################
+"""
+Matrix3x3
+"""
+struct SL_Matrix3f 
+    p::SVector{9,Cfloat}
+end
 
 """
 Quaternion.
@@ -108,6 +112,90 @@ struct SL_Quaternion_IM
     w::Cfloat
 end
 
+"""
+IMU Data structure
+"""
+struct SL_IMUData 
+    is_available::Bool
+    timestamp_ns::Culonglong
+    angular_velocity::SL_Vector3_IM
+    linear_acceleration::SL_Vector3_IM
+    angular_velocity_unc::SL_Vector3_IM # uncalibrated
+    linear_acceleration_unc::SL_Vector3_IM # uncalibrated
+    orientation::SL_Quaternion_IM
+    orientation_covariance::SL_Matrix3f 
+    angular_velocity_convariance::SL_Matrix3f 
+    linear_acceleration_convariance::SL_Matrix3f 
+end
+SL_IMUData() = SL_IMUData(true,
+						  1,
+						  SL_Vector3_IM(0,0,0),
+						  SL_Vector3_IM(0,0,0),
+						  SL_Vector3_IM(0,0,0),
+						  SL_Vector3_IM(0,0,0),
+						  SL_Quaternion_IM(0,0,0,0),
+						  SL_Matrix3f(zeros(SVector{9,Cfloat})),
+						  SL_Matrix3f(zeros(SVector{9,Cfloat})),
+						  SL_Matrix3f(zeros(SVector{9,Cfloat})))
+
+"""
+Barometer Data structure
+"""
+struct SL_BarometerData
+    is_available::Bool
+    timestamp_ns::Culonglong
+    pressure::Cfloat
+    relative_altitude::Cfloat
+end
+SL_BarometerData() = SL_BarometerData(true, 1, 0, 0)
+
+"""
+Heading state enum
+"""
+@enum SL_HEADING_STATE begin
+	SL_HEADING_STATE_GOOD # The heading is reliable and not affected by iron interferences. 
+	SL_HEADING_STATE_OK # The heading is reliable, but affected by slight iron interferences. 
+	SL_HEADING_STATE_NOT_GOOD # The heading is not reliable because affected by strong iron interferences. 
+	SL_HEADING_STATE_NOT_CALIBRATED # The magnetometer has not been calibrated. 
+	SL_HEADING_STATE_MAG_NOT_AVAILABLE # The magnetomer sensor is not available. 
+	SL_HEADING_STATE_LAST
+end
+
+"""
+Magnometer Data structure
+"""
+struct SL_MagnetometerData 
+	is_available::Bool
+	timestamp_ns::Culonglong
+	magnetic_field_c::SL_Vector3_IM # calibrated
+	magnetic_field_unc::SL_Vector3_IM # uncalibrated
+	magnetic_heading::Cfloat
+	magnetic_heading_state::SL_HEADING_STATE
+	magnetic_heading_accuracy::Cfloat
+	effective_rate::Cfloat
+end
+SL_MagnetometerData() = SL_MagnetometerData(true, 
+											1, 
+											SL_Vector3_IM(0,0,0),
+											SL_Vector3_IM(0,0,0),
+											0,
+											SL_HEADING_STATE_OK,
+											0,
+											0)
+
+"""
+Temperature Data structure
+"""
+struct SL_TemperatureData 
+    imu_temp::Cfloat
+    barometer_temp::Cfloat
+    onboard_left_temp::Cfloat
+    onboard_right_temp::Cfloat
+end
+SL_TemperatureData() = SL_TemperatureData(0, 0, 0, 0)
+
+#############################  ###########################################################
+
 mutable struct SL_PoseData
     valid::Bool # what is valid?
     timestamp::Culonglong
@@ -116,6 +204,25 @@ mutable struct SL_PoseData
     pose_confidence::Cint
 end
 SL_PoseData() = SL_PoseData(true, 1, SL_Quaternion_IM(0,0,0,0), SL_Vector3_IM(0,0,0), 0)
+
+"""
+Sensor Data structure
+"""
+mutable struct SL_SensorData 
+    # IMU data
+    imu::SL_IMUData
+    barometer::SL_BarometerData
+    magnetometer::SL_MagnetometerData 
+    temperature::SL_TemperatureData
+    camera_moving_state::Cint
+    image_sync_trigger::Cint
+end
+SL_SensorData() = SL_SensorData(SL_IMUData(),
+								SL_BarometerData(),
+								SL_MagnetometerData(),
+								SL_TemperatureData(),
+								0,
+								0)
 
 @enum USB_DEVICE begin
 	USB_DEVICE_OCULUS
@@ -240,6 +347,14 @@ Defines which type of position matrix is used to store camera path and pose.
 @enum SL_REFERENCE_FRAME begin
 	SL_REFERENCE_FRAME_WORLD  # The transform of SL_Pose will contains the motion with reference to the world frame (previously called PATH).
 	SL_REFERENCE_FRAME_CAMERA # The transform of SL_Pose will contains the motion with reference to the previous camera frame (previously called POSE).
+end
+
+"""
+Lists specific and particular timestamps
+"""
+@enum SL_TIME_REFERENCE begin
+	SL_TIME_REFERENCE_IMAGE # Defines the timestamp at the time the frame has been extracted from USB stream. 
+	SL_TIME_REFERENCE_CURRENT #  Defines the timestamp at the time of the function call. 
 end
 
 """

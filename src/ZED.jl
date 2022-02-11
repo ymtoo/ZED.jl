@@ -1,8 +1,11 @@
 module ZED
 
-using Dates
+using Requires
 using DocStringExtensions
+
+using Dates
 using Images
+using StaticArrays
 
 include("utils.jl")
 include("types.jl")

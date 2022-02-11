@@ -6,7 +6,7 @@ export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl
 export sl_get_width, sl_get_height, sl_get_sensors_configuration, sl_get_current_timestamp, 
     sl_get_svo_number_of_frames
 
-export sl_get_position_data!, sl_get_position!
+export sl_get_position_data!, sl_get_position!, sl_get_sensors_data!
 
 export sl_enable_spatial_mapping, sl_disable_spatial_mapping, sl_get_spatial_mapping_state,
     sl_extract_whole_spatial_map, sl_save_mesh, sl_apply_texture, sl_filter_mesh
@@ -381,6 +381,25 @@ function sl_get_position!(camera_id::T, rotation::Ref{SL_Quaternion}, position::
                   (Cint, Ref{SL_Quaternion}, Ref{SL_Vector3}, Cuint),
                   camera_id, rotation, position, reference_frame)
     SL_POSITIONAL_TRACKING_STATE(state)
+end
+
+"""
+Gets the full Sensor data from the ZED-M/ZED2/ZED2i. Returns an error is using ZED (v1) which does not contains internal sensors.
+
+# Arguments
+- camera_id : id of the camera instance.
+- data : sensor data.
+- time_reference : time reference.
+
+# Returns
+ERROR_CODE::SUCCESS if sensors data have been extracted.
+"""
+function sl_get_sensors_data!(camera_id::T, data::Ref{SL_SensorData}, time_reference::SL_TIME_REFERENCE) where {T<:Integer}
+    err = ccall((:sl_get_sensors_data, zed),
+                Cint,
+                (Cint, Ref{SL_SensorData}, Cuint),
+                camera_id, data, time_reference)
+    SL_ERROR_CODE(err)
 end
 
 ############################# Spatial Mapping #####################################################
