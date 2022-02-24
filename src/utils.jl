@@ -40,7 +40,7 @@ function savedepth(x::AbstractArray{T,3}, path::AbstractString) where {T}
         for j ∈ 1:n
             x1 = x[i,j,1]
             img[i,j] = if isnan(x1) || isinf(x1)
-                T(1.0) # set to max if it is NaN or Inf?
+                T(0.0) # set to zero if it is NaN or Inf (undefined)
             else
                x1 ./ normalized
             end
