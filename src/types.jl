@@ -196,19 +196,19 @@ SL_TemperatureData() = SL_TemperatureData(0, 0, 0, 0)
 
 #############################  ###########################################################
 
-mutable struct SL_PoseData
+struct SL_PoseData
     valid::Bool # what is valid?
     timestamp::Culonglong
     rotation::SL_Quaternion_IM 
     translation::SL_Vector3_IM
     pose_confidence::Cint
 end
-SL_PoseData() = SL_PoseData(true, 1, SL_Quaternion_IM(0,0,0,0), SL_Vector3_IM(0,0,0), 0)
+SL_PoseData() = SL_PoseData(false, 1, SL_Quaternion_IM(0,0,0,0), SL_Vector3_IM(0,0,0), 0)
 
 """
 Sensor Data structure
 """
-mutable struct SL_SensorData 
+struct SL_SensorData 
     # IMU data
     imu::SL_IMUData
     barometer::SL_BarometerData
@@ -605,7 +605,7 @@ mutable struct SL_InitParameters
 	\n default : true
 	Note: The stabilization uses the positional tracking to increase its accuracy, so the Positional Tracking module will be enabled automatically when set to true.\n
 	"""
-	depth_stabilization::Cint
+	depth_stabilization::Bool
 	"""
 	This parameter allows you to specify the minimum depth value (from the camera) that will be computed, measured in the `UNIT` you define.
 	\n In stereovision (the depth technology used by the camera), looking for closer depth values can have a slight impact on performance and memory consumption.
@@ -688,7 +688,7 @@ function SL_InitParameters(camera_id::T) where {T<:Integer}
 					  false,
 					  false,
 					  SL_DEPTH_MODE_PERFORMANCE,
-					  Cint(1),
+					  true,
 					  Cfloat(-1),
 					  Cfloat(-1),
 					  SL_UNIT_MILLIMETER,
@@ -812,11 +812,11 @@ mutable struct SL_PositionalTrackingParameters
 	"""
 	Rotation of the camera in the world frame when the camera is started. By default, it should be identity.
 	"""
-	initial_world_rotation::SL_Quaternion
+	initial_world_rotation::SL_Quaternion_IM
 	"""
 	Position of the camera in the world frame when the camera is started. By default, it should be identity.
 	"""
-	initial_world_position::SL_Vector3
+	initial_world_position::SL_Vector3_IM
 	"""
 	This mode enables the camera to remember its surroundings. This helps correct positional tracking drift, and can be helpful for positioning
 	different cameras relative to one other in space.
@@ -852,8 +852,8 @@ mutable struct SL_PositionalTrackingParameters
 	enable_imu_fusion::Bool
 end
 function SL_PositionalTrackingParameters()
-	SL_PositionalTrackingParameters(SL_Quaternion(Cfloat(0),Cfloat(0),Cfloat(0),Cfloat(1)),
-									SL_Vector3(Cfloat(0), Cfloat(0), Cfloat(0)),
+	SL_PositionalTrackingParameters(SL_Quaternion_IM(Cfloat(0),Cfloat(0),Cfloat(0),Cfloat(1)),
+									SL_Vector3_IM(Cfloat(0), Cfloat(0), Cfloat(0)),
 									true,
 									false,
 									false,

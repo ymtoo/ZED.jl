@@ -339,7 +339,7 @@ Sets a value in the ZED's camera settings.
 - value : new value
 """
 function sl_set_camera_settings(camera_id::T, mode::SL_VIDEO_SETTINGS, value::T) where {T<:Integer}
-
+    error("Not implemented")
 end
 
 ############################# Motion Tracking #####################################################
@@ -375,10 +375,10 @@ Retrieves the estimated position and orientation of the camera in the specified 
 # Returns
 The current state of the tracking process (see \ref SL_POSITIONAL_TRACKING_STATE).
 """
-function sl_get_position!(camera_id::T, rotation::Ref{SL_Quaternion}, position::Ref{SL_Vector3}, reference_frame::SL_REFERENCE_FRAME) where {T<:Integer}
+function sl_get_position!(camera_id::T, rotation::Ref{SL_Quaternion_IM}, position::Ref{SL_Vector3_IM}, reference_frame::SL_REFERENCE_FRAME) where {T<:Integer}
     state = ccall((:sl_get_position, zed), 
                   Cint, 
-                  (Cint, Ref{SL_Quaternion}, Ref{SL_Vector3}, Cuint),
+                  (Cint, Ref{SL_Quaternion_IM}, Ref{SL_Vector3_IM}, Cuint),
                   camera_id, rotation, position, reference_frame)
     SL_POSITIONAL_TRACKING_STATE(state)
 end
