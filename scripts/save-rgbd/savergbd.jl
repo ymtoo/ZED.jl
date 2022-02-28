@@ -12,14 +12,12 @@ init_param = SL_InitParameters(camera_id)
 init_param.camera_fps = 60
 init_param.resolution = ZED.SL_RESOLUTION_HD720
 init_param.input_type = ZED.SL_INPUT_TYPE_SVO
-init_param.camera_image_flip = ZED.SL_FLIP_MODE_OFF; 
+init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO
 init_param.camera_disable_self_calib = true # set to `true` for repeatability
 init_param.enable_image_enhancement = true
 init_param.svo_real_time_mode = false
 init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
 init_param.depth_stabilization = true
-init_param.depth_maximum_distance = 40
-init_param.depth_minimum_distance = -1
 init_param.coordinate_unit = ZED.SL_UNIT_MILLIMETER
 init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_IMAGE
 init_param.sdk_gpu_id = -1
@@ -118,6 +116,7 @@ let i = 0
             rotation = Ref(ZED.SL_Quaternion_IM(0,0,0,0))
             position = Ref(ZED.SL_Vector3_IM(0,0,0))
             tracking_state = sl_get_position!(camera_id, rotation, position, ZED.SL_REFERENCE_FRAME_WORLD)
+            println(tracking_state)
 
             translation_x = position[].x
             translation_y = position[].y
@@ -128,8 +127,6 @@ let i = 0
             rotation_w = rotation[].w
 
             #tracking_state = sl_get_position_data!(camera_id, pose, ZED.SL_REFERENCE_FRAME_WORLD)
-            println(tracking_state)
-            println(rotation_x)
 
             sensor_data = Ref(SL_SensorData())
             sl_get_sensors_data!(camera_id, sensor_data, ZED.SL_TIME_REFERENCE_IMAGE)
