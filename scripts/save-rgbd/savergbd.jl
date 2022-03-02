@@ -89,7 +89,7 @@ isdir(leftimage_dir) === false && mkdir(leftimage_dir)
 isdir(rightimage_dir) === false && mkdir(rightimage_dir)
 isdir(depthimage_dir) === false && mkdir(depthimage_dir)
 
-df = DataFrame(:frame => Int[], 
+df = DataFrame(:filename => String[], 
                :position_x => Cfloat[],
                :position_y => Cfloat[],
                :position_z => Cfloat[],
@@ -178,7 +178,7 @@ let i = 0
             imu_acceleration_y = sensor_data[].imu.linear_acceleration.y
             imu_acceleration_z = sensor_data[].imu.linear_acceleration.z
 
-            row = [i;; translation_x;; translation_y;;
+            row = [first(splitext(filename));; translation_x;; translation_y;;
                    translation_z;; rotation_x;; 
                    rotation_y;; rotation_z;; 
                    rotation_w;; imu_orientation_x;;
