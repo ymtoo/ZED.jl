@@ -202,8 +202,18 @@ struct SL_PoseData
     rotation::SL_Quaternion_IM 
     translation::SL_Vector3_IM
     pose_confidence::Cint
+	pose_covariance::SVector{36,Cfloat}
+	twist::SVector{6,Cfloat}
+	twist_covariance::SVector{36,Cfloat}
 end
-SL_PoseData() = SL_PoseData(false, 1, SL_Quaternion_IM(0,0,0,0), SL_Vector3_IM(0,0,0), 0)
+SL_PoseData() = SL_PoseData(false, 
+							1, 
+							SL_Quaternion_IM(0,0,0,0), 
+							SL_Vector3_IM(0,0,0), 
+							0,
+							zeros(SVector{36,Cfloat}),
+							zeros(SVector{6,Cfloat}),
+							zeros(SVector{36,Cfloat}))
 
 """
 Sensor Data structure
@@ -497,6 +507,7 @@ Lists available depth computation modes.
 	SL_DEPTH_MODE_PERFORMANCE # Computation mode optimized for speed.
 	SL_DEPTH_MODE_QUALITY # Computation mode designed for challenging areas with untextured surfaces.
 	SL_DEPTH_MODE_ULTRA # Computation mode favorising edges and sharpness. Requires more GPU memory and computation power.
+	SL_DEPTH_MODE_NEURAL # End to End Neural disparity estimation, requires AI module
 end
 
 @enum SL_FLIP_MODE begin
@@ -514,6 +525,8 @@ SL_SVO_COMPRESSION_MODE_LOSSLESS is an improvement of previous lossless compress
 	SL_SVO_COMPRESSION_MODE_LOSSLESS # PNG/ZSTD (lossless) CPU based compression : avg size = 42% (of RAW).
 	SL_SVO_COMPRESSION_MODE_H264 # H264(AVCHD) GPU based compression : avg size = 1% (of RAW). Requires a NVIDIA GPU
 	SL_SVO_COMPRESSION_MODE_H265 # H265(HEVC) GPU based compression: avg size = 1% (of RAW). Requires a NVIDIA GPU, Pascal architecture or newer
+	SL_SVO_COMPRESSION_MODE_H264_LOSSLESS # H264 Lossless GPU/Hardware based compression: avg size = 25% (of RAW). Provides a SSIM/PSNR result (vs RAW) >= 99.9%. Requires a NVIDIA GPU 
+	SL_SVO_COMPRESSION_MODE_H265_LOSSLESS # H265 Lossless GPU/Hardware based compression: avg size = 25% (of RAW). Provides a SSIM/PSNR result (vs RAW) >= 99.9%. Requires a NVIDIA GPU 
 end
 
 """
@@ -736,13 +749,20 @@ mutable struct SL_RuntimeParameters
 	\n Decreasing this value will remove depth data from image areas which are uniform.
 	"""
 	texture_confidence_threshold::Cint
+	"""
+    Defines if the saturated area (Luminance>=255) must be removed from depth map estimation
+    \n True by default
+    \n It is recommended to keep this parameter at true because saturated area can create false detection.
+    """
+	remove_saturated_areas::Bool
 end
 function SL_RuntimeParameters()
 	SL_RuntimeParameters(SL_SENSING_MODE_STANDARD, 
 						 SL_REFERENCE_FRAME_CAMERA, 
 						 true, 
 						 Cint(100), 
-						 Cint(100))
+						 Cint(100),
+						 true)
 end
 
 """

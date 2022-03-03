@@ -97,6 +97,7 @@ df = DataFrame(:filename => String[],
                :rotation_y => Cfloat[],
                :rotation_z => Cfloat[],
                :rotation_w => Cfloat[],
+               :pose_covariance => String[],
                :imu_orientation_x => Cfloat[],
                :imu_orientation_y => Cfloat[],
                :imu_orientation_z => Cfloat[],
@@ -112,21 +113,23 @@ let i = 0
         println(state)
         if state == SL_ERROR_CODE(0)
 
-            #pose = Ref(SL_PoseData())
-            rotation = Ref(ZED.SL_Quaternion_IM(0,0,0,0))
-            position = Ref(ZED.SL_Vector3_IM(0,0,0))
-            tracking_state = sl_get_position!(camera_id, rotation, position, ZED.SL_REFERENCE_FRAME_WORLD)
+            posedata = Ref(SL_PoseData())
+            tracking_state = sl_get_position_data!(camera_id, posedata, ZED.SL_REFERENCE_FRAME_WORLD)
+            rotation = posedata[].rotation
+            translation = posedata[].translation
+            #rotation = Ref(ZED.SL_Quaternion_IM(0,0,0,0))
+            #position = Ref(ZED.SL_Vector3_IM(0,0,0))
+            #tracking_state = sl_get_position!(camera_id, rotation, position, ZED.SL_REFERENCE_FRAME_WORLD)
             println(tracking_state)
 
-            translation_x = position[].x
-            translation_y = position[].y
-            translation_z = position[].z
-            rotation_x = rotation[].x
-            rotation_y = rotation[].y
-            rotation_z = rotation[].z
-            rotation_w = rotation[].w
-
-            #tracking_state = sl_get_position_data!(camera_id, pose, ZED.SL_REFERENCE_FRAME_WORLD)
+            translation_x = translation.x
+            translation_y = translation.y
+            translation_z = translation.z
+            rotation_x = rotation.x
+            rotation_y = rotation.y
+            rotation_z = rotation.z
+            rotation_w = rotation.w
+            pose_covariance = posedata[].pose_covariance
 
             sensor_data = Ref(SL_SensorData())
             sl_get_sensors_data!(camera_id, sensor_data, ZED.SL_TIME_REFERENCE_IMAGE)
@@ -181,7 +184,8 @@ let i = 0
             row = [first(splitext(filename));; translation_x;; translation_y;;
                    translation_z;; rotation_x;; 
                    rotation_y;; rotation_z;; 
-                   rotation_w;; imu_orientation_x;;
+                   rotation_w;; string(pose_covariance);;
+                   imu_orientation_x;;
                    imu_orientation_y;; imu_orientation_z;;
                    imu_orientation_w;; imu_acceleration_x;;
                    imu_acceleration_y;; imu_acceleration_z]
