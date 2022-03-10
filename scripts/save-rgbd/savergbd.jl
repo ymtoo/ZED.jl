@@ -145,7 +145,7 @@ let i = 0
                                   ZED.SL_MEM_CPU, 
                                   width, 
                                   height)
-                leftimage = getframes(leftimage_ptr, ZED.SL_MAT_TYPE_U8_C4)
+                leftimage = getframes(leftimage_ptr, Cuchar, sl_mat_get_value_uchar4)
                 savergba(leftimage, leftimage_path)
             end
 
@@ -157,7 +157,7 @@ let i = 0
                                   ZED.SL_MEM_CPU, 
                                   width, 
                                   height)
-                rightimage = getframes(rightimage_ptr, ZED.SL_MAT_TYPE_U8_C4)
+                rightimage = getframe(rightimage_ptr, Cuchar, sl_mat_get_value_uchar4)
                 savergba(rightimage, rightimage_path)
             end
             
@@ -169,7 +169,7 @@ let i = 0
                                     ZED.SL_MEM_CPU, 
                                     width, 
                                     height)
-                depthimage = getframes(depthimage_ptr, ZED.SL_MAT_TYPE_F32_C1)
+                depthimage = getframe(depthimage_ptr, Cuchar, sl_mat_get_value_uchar4)
                 savedepth(depthimage, depthimage_path)
             end
 
@@ -184,7 +184,7 @@ let i = 0
             row = [first(splitext(filename));; translation_x;; translation_y;;
                    translation_z;; rotation_x;; 
                    rotation_y;; rotation_z;; 
-                   rotation_w;; string(pose_covariance);;
+                   rotation_w;; string(Float64.(pose_covariance));;
                    imu_orientation_x;;
                    imu_orientation_y;; imu_orientation_z;;
                    imu_orientation_w;; imu_acceleration_x;;

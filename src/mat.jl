@@ -17,7 +17,7 @@ export sl_mat_set_to_uchar, sl_mat_set_to_uchar2,
        sl_mat_set_to_float, sl_mat_set_to_float2,
        sl_mat_set_to_float3, sl_mat_set_to_float4
 
-export getframes
+export getframe
 
 function sl_mat_create_new(width::T, height::T, mat_type::SL_MAT_TYPE, mem::SL_MEM) where {T<:Integer}
     ccall((:sl_mat_create_new, zed), 
@@ -482,25 +482,27 @@ function sl_mat_set_to_float4(image_ptr::Ptr{Cint}, value::Vector{Cfloat}, mem::
     SL_ERROR_CODE(err)
 end
 
-const sl_mat_get = Dict(
-    SL_MAT_TYPE_F32_C1 => (sl_mat_get_value_float, Cfloat, 1),
-	SL_MAT_TYPE_F32_C2 => (sl_mat_get_value_float2, Cfloat, 2),
-	SL_MAT_TYPE_F32_C3 => (sl_mat_get_value_float3, Cfloat, 3),
-	SL_MAT_TYPE_F32_C4 => (sl_mat_get_value_float4, Cfloat, 4),
-	SL_MAT_TYPE_U8_C1 =>(sl_mat_get_value_uchar, Cuchar, 1),
-	SL_MAT_TYPE_U8_C2 => (sl_mat_get_value_uchar2, Cuchar, 2),
-	SL_MAT_TYPE_U8_C3 => (sl_mat_get_value_uchar3, Cuchar, 3),
-	SL_MAT_TYPE_U8_C4 => (sl_mat_get_value_uchar4, Cuchar, 4)
-)
+# const sl_mat_get = Dict(
+#     SL_MAT_TYPE_F32_C1 => (sl_mat_get_value_float),
+# 	SL_MAT_TYPE_F32_C2 => (sl_mat_get_value_float2),
+# 	SL_MAT_TYPE_F32_C3 => (sl_mat_get_value_float3),
+# 	SL_MAT_TYPE_F32_C4 => (sl_mat_get_value_float4),
+# 	SL_MAT_TYPE_U8_C1 =>(sl_mat_get_value_uchar),
+# 	SL_MAT_TYPE_U8_C2 => (sl_mat_get_value_uchar2),
+# 	SL_MAT_TYPE_U8_C3 => (sl_mat_get_value_uchar3),
+# 	SL_MAT_TYPE_U8_C4 => (sl_mat_get_value_uchar4)
+# )
 
 """
 Get an image frame from `image_ptr` 
 """
-function getframes(image_ptr::Ptr{Cint}, mattype)
-    width = sl_mat_get_width(image_ptr)
-    height = sl_mat_get_height(image_ptr)
+function getframe(image_ptr::Ptr{Cint}, mateltype, sl_mat_get_value)
+    width = sl_mat_get_width(image_ptr)::Cint
+    height = sl_mat_get_height(image_ptr)::Cint
+    nchannels = sl_mat_get_channels(image_ptr)::Cint
+
     mem = sl_mat_get_memory_type(image_ptr)
-    sl_mat_get_value, mateltype, nchannels = sl_mat_get[mattype] 
+    #sl_mat_get_value = sl_mat_get[mattype] 
     mat = zeros(mateltype, height, width, nchannels) 
     for col ∈ 1:width
         for row ∈ 1:height
