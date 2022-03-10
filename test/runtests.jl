@@ -11,7 +11,7 @@ using Test
                                               ZED.SL_COORDINATE_SYSTEM_RIGHT_HANDED_Y_UP, ZED.SL_COORDINATE_SYSTEM_RIGHT_HANDED_Z_UP, 
                                               ZED.SL_COORDINATE_SYSTEM_LEFT_HANDED_Z_UP, ZED.SL_COORDINATE_SYSTEM_RIGHT_HANDED_Z_UP_X_FWD)
     @test instances(SL_INPUT_TYPE) == (ZED.SL_INPUT_TYPE_USB, ZED.SL_INPUT_TYPE_SVO, ZED.SL_INPUT_TYPE_STREAM)
-    @test instances(SL_DEPTH_MODE) == (ZED.SL_DEPTH_MODE_NONE, ZED.SL_DEPTH_MODE_PERFORMANCE, ZED.SL_DEPTH_MODE_QUALITY, ZED.SL_DEPTH_MODE_ULTRA)
+    @test instances(SL_DEPTH_MODE) == (ZED.SL_DEPTH_MODE_NONE, ZED.SL_DEPTH_MODE_PERFORMANCE, ZED.SL_DEPTH_MODE_QUALITY, ZED.SL_DEPTH_MODE_ULTRA, ZED.SL_DEPTH_MODE_NEURAL)
     @test instances(SL_FLIP_MODE) == (ZED.SL_FLIP_MODE_OFF, ZED.SL_FLIP_MODE_ON, ZED.SL_FLIP_MODE_AUTO)
 
 end
@@ -66,7 +66,7 @@ end
 
             svo_position = sl_get_svo_position(camera_id)
             @test svo_position == i
-            frames[:,:,:,svo_position] = getframes(image_ptr, ZED.SL_MAT_TYPE_U8_C4)
+            frames[:,:,:,svo_position] = getframe(image_ptr, Cuchar, sl_mat_get_value_uchar4)
         elseif state == ZED.SL_ERROR_CODE_END_OF_SVOFILE_REACHED
             sl_set_svo_position(camera_id, 0)
             svo_position = sl_get_svo_position(camera_id)
@@ -128,17 +128,14 @@ end
         image_ptr = sl_mat_create_new(width, height, mat_type, mem)
         @test sl_mat_is_init(image_ptr) === true
         @test sl_mat_get_height(image_ptr) == height
+        @test sl_mat_get_width(image_ptr) == width
         @test sl_mat_get_channels(image_ptr) == numchannel
         @test sl_mat_get_memory_type(image_ptr) == mem
 
-        zerovalue = if mateltype == Cuchar
-            [mateltype(0) for _ ∈ 1:numchannel]
-        else
-            [mateltype(0) for _ ∈ 1:numchannel]
-        end
+        zerovalue = [mateltype(0) for _ ∈ 1:numchannel]
         set_to_err = set_to(image_ptr, zerovalue, mem)
         @test set_to_err == ZED.SL_ERROR_CODE_SUCCESS
-        frames = getframes(image_ptr, mat_type)
+        frames = getframe(image_ptr, mateltype, get_value)
         X = zeros(mateltype, height, width, numchannel) 
         @test frames == X
 
@@ -152,7 +149,7 @@ end
         set_value(image_ptr, col, row, value, mem)
         @test get_value(image_ptr, col, row, mem) == value
 
-        frames = getframes(image_ptr, mat_type)
+        frames = getframe(image_ptr, mateltype, get_value)
         @test size(frames) == (height, width, numchannel)
         X[row,col,:] = value
         @test frames == X
