@@ -119,6 +119,7 @@ end
                         sl_mat_set_to_float3,
                         sl_mat_set_to_float4,]
     mem = ZED.SL_MEM_CPU
+    dir = mktempdir()
     for (mat_type, numchannel, mateltype, set_value, get_value, set_to) ∈ zip(mat_types, 
                                                                               numchannels, 
                                                                               mateltypes,
@@ -154,8 +155,22 @@ end
         X[row,col,:] = value
         @test frames == X
 
+        nchannels = sl_mat_get_channels(image_ptr)
+        # https://www.stereolabs.com/docs/api/classsl_1_1Mat.html#accab3cb8c395f6b32c897e549fef78a8
+        if (mateltype == Cuchar) && (nchannels != 2)
+            file_path = joinpath(dir, "image.png")
+            sl_mat_write(image_ptr, file_path)
+            new_image_ptr = sl_mat_create_new(width, height, mat_type, mem)
+            sl_mat_read(new_image_ptr, file_path)
+            new_X = zeros(mateltype, height, width, numchannel) 
+            new_X[row,col,:] = value
+            new_frames = getframe(image_ptr, mateltype, get_value)
+            @test new_frames == new_X
+        end
+
         sl_mat_free(image_ptr, mem)
         @test sl_mat_is_init(image_ptr) === false
+
     end
 
 end

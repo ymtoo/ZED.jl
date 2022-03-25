@@ -19,6 +19,8 @@ export sl_mat_set_to_uchar, sl_mat_set_to_uchar2,
 
 export getframe
 
+export sl_mat_read, sl_mat_write
+
 function sl_mat_create_new(width::T, height::T, mat_type::SL_MAT_TYPE, mem::SL_MEM) where {T<:Integer}
     ccall((:sl_mat_create_new, zed), 
           Ptr{Cint}, 
@@ -391,9 +393,9 @@ end
 Fills the entire Mat with the given value.
 
 # Arguments
-ptr : Ptr to the Mat.
-value : the value with which to fill the Mat.
-mem : Whether Mat should exist on CPU or GPU memory (SL_MEM).
+- ptr : Ptr to the Mat.
+- value : the value with which to fill the Mat.
+- mem : Whether Mat should exist on CPU or GPU memory (SL_MEM).
 
 # Returns
 ERROR_CODE::SUCCESS if everything went well, ERROR_CODE::FAILURE otherwise.
@@ -510,4 +512,42 @@ function getframe(image_ptr::Ptr{Cint}, mateltype, sl_mat_get_value)
         end
     end
     mat
+end
+
+"""
+Reads an image from a file. Supports .png and .jpeg. Only works if Mat has access to MEM_CPU.
+
+# Arguments
+- ptr : Ptr to the Mat.
+- file_path : File path, including file name and extension.
+
+# Returns
+ERROR_CODE::SUCCESS if everything went well, ERROR_CODE::FAILURE otherwise.
+"""
+function sl_mat_read(image_ptr::Ptr{Cint}, file_path::String)
+    err = ccall((:sl_mat_read, zed), 
+                Cint, 
+                (Ptr{Cint}, Cstring),
+                image_ptr, file_path)
+    SL_ERROR_CODE(err)
+end
+
+"""
+Writes the Mat into a file as an image. Only works if Mat has access to MEM_CPU.
+
+# Argments
+- ptr : Ptr to the Mat.
+- file_path : File path, including file name and extension.
+
+# Returns
+ERROR_CODE::SUCCESS if everything went well, ERROR_CODE::FAILURE otherwise.
+"""
+function sl_mat_write(image_ptr::Ptr{Cint}, file_path::String)
+    nchannels = sl_mat_get_channels(image_ptr)
+    nchannels == 2 && throw(ArgumentError("Channel of 2 is not supported. Refer to https://www.stereolabs.com/docs/api/classsl_1_1Mat.html#accab3cb8c395f6b32c897e549fef78a8 for more details"))
+    err = ccall((:sl_mat_write, zed), 
+                Cint, 
+                (Ptr{Cint}, Cstring),
+                image_ptr, file_path)
+    SL_ERROR_CODE(err)
 end
