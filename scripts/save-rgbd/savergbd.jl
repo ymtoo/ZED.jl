@@ -9,7 +9,7 @@ camera_id = 0
 sl_create_camera(camera_id)
 
 init_param = SL_InitParameters(camera_id)
-init_param.camera_fps = 60
+init_param.camera_fps = 30
 init_param.resolution = ZED.SL_RESOLUTION_HD720
 init_param.input_type = ZED.SL_INPUT_TYPE_SVO
 init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO
@@ -77,7 +77,7 @@ rightimage_ptr = sl_mat_create_new(width,
                                    ZED.SL_MEM_CPU)
 depthimage_ptr = sl_mat_create_new(width, 
                                    height, 
-                                   ZED.SL_MAT_TYPE_F32_C4, 
+                                   ZED.SL_MAT_TYPE_F32_C1, 
                                    ZED.SL_MEM_CPU)
 
 root = length(ARGS) < 2 ? "." : ARGS[2]
@@ -145,7 +145,7 @@ let i = 0
                                   ZED.SL_MEM_CPU, 
                                   width, 
                                   height)
-                leftimage = getframes(leftimage_ptr, Cuchar, sl_mat_get_value_uchar4)
+                leftimage = getframe(leftimage_ptr, Cuchar, sl_mat_get_value_uchar4)
                 savergba(leftimage, leftimage_path)
             end
 
@@ -169,7 +169,7 @@ let i = 0
                                     ZED.SL_MEM_CPU, 
                                     width, 
                                     height)
-                depthimage = getframe(depthimage_ptr, Cuchar, sl_mat_get_value_uchar4)
+                depthimage = getframe(depthimage_ptr, Cfloat, sl_mat_get_value_float)
                 savedepth(depthimage, depthimage_path)
             end
 
