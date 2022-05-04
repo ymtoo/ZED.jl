@@ -16,7 +16,7 @@ camera_id = 0
 sl_create_camera(camera_id)
 
 init_param = SL_InitParameters(camera_id)
-init_param.camera_fps = 0
+init_param.camera_fps = 30
 init_param.resolution = ZED.SL_RESOLUTION_HD720
 init_param.input_type = length(ARGS) < 1 ? ZED.SL_INPUT_TYPE_USB : ZED.SL_INPUT_TYPE_SVO 
 init_param.svo_real_time_mode = length(ARGS) < 1 ? true : false
@@ -24,12 +24,12 @@ init_param.svo_real_time_mode = length(ARGS) < 1 ? true : false
 init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
 init_param.camera_disable_self_calib = false
 init_param.enable_image_enhancement = true
-init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
+init_param.depth_mode = ZED.SL_DEPTH_MODE_NEURAL
 init_param.depth_stabilization = true
 init_param.depth_maximum_distance = 40
 init_param.depth_minimum_distance = -1
 init_param.coordinate_unit = ZED.SL_UNIT_METER
-init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_LEFT_HANDED_Y_UP
+init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_IMAGE
 init_param.sdk_gpu_id = -1
 init_param.sdk_verbose = false
 init_param.sensors_required = false
@@ -47,8 +47,8 @@ tracking_param = SL_PositionalTrackingParameters()
 tracking_param.enable_area_memory = true
 tracking_param.enable_imu_fusion = true
 tracking_param.enable_pose_smothing = false
-tracking_param.initial_world_position = ZED.SL_Vector3(0, 0, 0)
-tracking_param.initial_world_rotation = ZED.SL_Quaternion(0, 0, 0, 1)
+tracking_param.initial_world_position = ZED.SL_Vector3_IM(0, 0, 0)
+tracking_param.initial_world_rotation = ZED.SL_Quaternion_IM(0, 0, 0, 1)
 tracking_param.set_as_static = false
 tracking_param.set_floor_as_origin = false
 
