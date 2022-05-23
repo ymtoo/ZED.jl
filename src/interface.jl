@@ -4,7 +4,7 @@ export sl_find_usb_device, sl_create_camera, sl_close_camera, sl_open_camera, sl
     sl_disable_positional_tracking, sl_get_svo_position, sl_set_svo_position
 
 export sl_get_width, sl_get_height, sl_get_sensors_configuration, sl_get_current_timestamp, 
-    sl_get_svo_number_of_frames
+    sl_get_svo_number_of_frames, sl_set_camera_settings
 
 export sl_get_position_data!, sl_get_position!, sl_get_sensors_data!
 
@@ -312,7 +312,7 @@ Get the Timestamp at the time the frame has been extracted from USB stream. (sho
 - the Camera timestamp.
 """
 function sl_get_current_timestamp(camera_id::T; indatetime=false) where {T<:Integer}
-    ts = ccall((:sl_get_current_timestamp, zed), Culonglong, (Cint,), Cint(camera_id))
+    ts = ccall((:sl_get_current_timestamp, zed), Culonglong, (Cint,), camera_id)
     x = Int128(ts)
     indatetime ? nanounix2datetime(x) : x
 end
@@ -339,7 +339,7 @@ Sets a value in the ZED's camera settings.
 - value : new value
 """
 function sl_set_camera_settings(camera_id::T, mode::SL_VIDEO_SETTINGS, value::T) where {T<:Integer}
-    error("Not implemented")
+    ccall((:sl_set_camera_settings, zed), Cvoid, (Cint, Ref{SL_VIDEO_SETTINGS}, Cint), camera_id, mode, value)
 end
 
 ############################# Motion Tracking #####################################################

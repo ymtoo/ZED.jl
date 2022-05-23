@@ -1,3 +1,11 @@
+""" 
+save rgbd images
+
+Arguments
+- path to the SVO file, default is ""
+- directory to save the images, default is the current directory
+"""
+
 using Pkg
 Pkg.activate(".")
 
@@ -32,6 +40,8 @@ state = sl_open_camera(camera_id, init_param, path_svo, "", 0, "", "", "")
 if state != SL_ERROR_CODE(0)
     error("Error Open Camera $(state), exit program.")
 end
+
+sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, 4600) # turn off auto whitebalance
 
 # tracking_param = SL_PositionalTrackingParameters(ZED.SL_Quaternion_IM(Cfloat(0),Cfloat(0),Cfloat(0),Cfloat(1)),
 #                                                 ZED.SL_Vector3_IM(Cfloat(0), Cfloat(0), Cfloat(0)),
@@ -145,8 +155,9 @@ let i = 0
                                   ZED.SL_MEM_CPU, 
                                   width, 
                                   height)
-                leftimage = getframe(leftimage_ptr, Cuchar, sl_mat_get_value_uchar4)
-                savergba(leftimage, leftimage_path)
+                sl_mat_write(leftimage_ptr, leftimage_path)
+                #leftimage = getframe(leftimage_ptr, Cuchar, sl_mat_get_value_uchar4)
+                #savergba(leftimage, leftimage_path)
             end
 
             rightimage_path = joinpath(rightimage_dir, filename)
@@ -157,8 +168,9 @@ let i = 0
                                   ZED.SL_MEM_CPU, 
                                   width, 
                                   height)
-                rightimage = getframe(rightimage_ptr, Cuchar, sl_mat_get_value_uchar4)
-                savergba(rightimage, rightimage_path)
+                sl_mat_write(rightimage_ptr, rightimage_path)
+                #rightimage = getframe(rightimage_ptr, Cuchar, sl_mat_get_value_uchar4)
+                #savergba(rightimage, rightimage_path)
             end
             
             depthimage_path = joinpath(depthimage_dir, filename)
@@ -169,8 +181,9 @@ let i = 0
                                     ZED.SL_MEM_CPU, 
                                     width, 
                                     height)
-                depthimage = getframe(depthimage_ptr, Cfloat, sl_mat_get_value_float)
-                savedepth(depthimage, depthimage_path)
+                sl_mat_write(depthimage_ptr, depthimage_path)
+                #depthimage = getframe(depthimage_ptr, Cfloat, sl_mat_get_value_float)
+                #savedepth(depthimage, depthimage_path)
             end
 
             imu_orientation_x = sensor_data[].imu.orientation.x
