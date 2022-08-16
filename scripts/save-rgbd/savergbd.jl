@@ -21,17 +21,19 @@ init_param.camera_fps = 30
 init_param.resolution = ZED.SL_RESOLUTION_HD720
 init_param.input_type = ZED.SL_INPUT_TYPE_SVO
 init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO
-init_param.camera_disable_self_calib = true # set to `true` for repeatability
+init_param.camera_disable_self_calib = false # set to `true` for repeatability
 init_param.enable_image_enhancement = true
 init_param.svo_real_time_mode = false
 init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
 init_param.depth_stabilization = true
-init_param.coordinate_unit = ZED.SL_UNIT_MILLIMETER
+init_param.coordinate_unit = ZED.SL_UNIT_METER
 init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_IMAGE
 init_param.sdk_gpu_id = -1
 init_param.sdk_verbose = false
 init_param.sensors_required = false
 init_param.enable_right_side_measure = false
+init_param.depth_maximum_distance = 20
+init_param.depth_minimum_distance = 0.3
 
 path_svo = length(ARGS) < 1 ? "" : ARGS[1]
 println("$(pwd())")
@@ -41,7 +43,10 @@ if state != SL_ERROR_CODE(0)
     error("Error Open Camera $(state), exit program.")
 end
 
-sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, 4600) # turn off auto whitebalance
+sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_WHITEBALANCE_TEMPERATURE, 3500) # turn off auto whitebalance
+sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_GAIN, 80)
+sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_EXPOSURE, 80)
+sl_set_camera_settings(camera_id, ZED.SL_VIDEO_SETTINGS_GAMMA, 6)
 
 # tracking_param = SL_PositionalTrackingParameters(ZED.SL_Quaternion_IM(Cfloat(0),Cfloat(0),Cfloat(0),Cfloat(1)),
 #                                                 ZED.SL_Vector3_IM(Cfloat(0), Cfloat(0), Cfloat(0)),
@@ -66,9 +71,9 @@ end
 
 rt_param = SL_RuntimeParameters()
 rt_param.enable_depth = true
-rt_param.confidence_threshold = 100
+rt_param.confidence_threshold = 50
 rt_param.reference_frame = ZED.SL_REFERENCE_FRAME_CAMERA
-rt_param.sensing_mode = ZED.SL_SENSING_MODE_STANDARD
+rt_param.sensing_mode = ZED.SL_SENSING_MODE_FILL
 rt_param.texture_confidence_threshold = 100
 
 numframes = sl_get_svo_number_of_frames(camera_id)
@@ -116,7 +121,7 @@ df = DataFrame(:filename => String[],
                :imu_acceleration_y => Cfloat[],
                :imu_acceleration_z => Cfloat[])
 
-let i = 0
+let i = 1
     while (i < numframes)
         # Grab an image
         state = sl_grab(camera_id, rt_param)
@@ -146,11 +151,12 @@ let i = 0
 
             svo_position = sl_get_svo_position(camera_id)
 
-            filename = lpad("$(svo_position)", 4, "0") * ".png"
+            filename = lpad("$(svo_position)", 5, "0") * ".png"
             leftimage_path = joinpath(leftimage_dir, filename)
             if !isfile(leftimage_path) 
                 sl_retrieve_image(camera_id, 
                                   leftimage_ptr, 
+                                  #ZED.SL_VIEW_LEFT_UNRECTIFIED,
                                   ZED.SL_VIEW_LEFT, 
                                   ZED.SL_MEM_CPU, 
                                   width, 
@@ -164,6 +170,7 @@ let i = 0
             if !isfile(rightimage_path) 
                 sl_retrieve_image(camera_id, 
                                   rightimage_ptr, 
+                                  #ZED.SL_VIEW_RIGHT_UNRECTIFIED,
                                   ZED.SL_VIEW_RIGHT, 
                                   ZED.SL_MEM_CPU, 
                                   width, 

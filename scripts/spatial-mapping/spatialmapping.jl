@@ -24,10 +24,10 @@ init_param.svo_real_time_mode = length(ARGS) < 1 ? true : false
 init_param.camera_image_flip = ZED.SL_FLIP_MODE_AUTO 
 init_param.camera_disable_self_calib = false
 init_param.enable_image_enhancement = true
-init_param.depth_mode = ZED.SL_DEPTH_MODE_NEURAL
+init_param.depth_mode = ZED.SL_DEPTH_MODE_PERFORMANCE
 init_param.depth_stabilization = true
-init_param.depth_maximum_distance = 40
-init_param.depth_minimum_distance = -1
+init_param.depth_maximum_distance = 20 
+init_param.depth_minimum_distance = 0.3
 init_param.coordinate_unit = ZED.SL_UNIT_METER
 init_param.coordinate_system = ZED.SL_COORDINATE_SYSTEM_IMAGE
 init_param.sdk_gpu_id = -1
@@ -46,7 +46,7 @@ end
 tracking_param = SL_PositionalTrackingParameters()
 tracking_param.enable_area_memory = true
 tracking_param.enable_imu_fusion = true
-tracking_param.enable_pose_smothing = false
+tracking_param.enable_pose_smothing = true
 tracking_param.initial_world_position = ZED.SL_Vector3_IM(0, 0, 0)
 tracking_param.initial_world_rotation = ZED.SL_Quaternion_IM(0, 0, 0, 1)
 tracking_param.set_as_static = false
@@ -61,7 +61,7 @@ mapping_param = SL_SpatialMappingParameters()
 mapping_param.map_type = ZED.SL_SPATIAL_MAP_TYPE_MESH;
 mapping_param.max_memory_usage = 2048
 mapping_param.range_meter = Cfloat(0)
-mapping_param.resolution_meter = Cfloat(0.05)
+mapping_param.resolution_meter = Cfloat(0.02)
 mapping_param.save_texture = true
 mapping_param.use_chunk_only = true
 mapping_param.reverse_vertex_order = false
@@ -73,9 +73,9 @@ end
 
 rt_param = SL_RuntimeParameters()
 rt_param.enable_depth = true
-rt_param.confidence_threshold = 100
+rt_param.confidence_threshold = 50
 rt_param.reference_frame = ZED.SL_REFERENCE_FRAME_CAMERA
-rt_param.sensing_mode = ZED.SL_SENSING_MODE_STANDARD
+rt_param.sensing_mode = ZED.SL_SENSING_MODE_FILL
 rt_param.texture_confidence_threshold = 100
 
 width = sl_get_width(camera_id) 
